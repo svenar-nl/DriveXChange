@@ -4,6 +4,12 @@ This is the source-code for the DriveXChange robot.
 
 You can build the project with all supported [Mbed OS build tools](https://os.mbed.com/docs/mbed-os/latest/tools/index.html).
 
+## Code files
+
+The following files contain the code used for the robot's logic
+
+1. `main.cpp`
+1. `src/*`
 
 ## Building and running
 
