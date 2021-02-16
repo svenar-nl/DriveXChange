@@ -47,6 +47,7 @@ PinName HW_HEFSW2(A5); // Forklift limit switch 2
 //
 // =====-----------------------------------------------=====
 ROBOT robot;
+Timer timer;
 // =====-----------------------------------------------=====
 //
 //                   LIBRARY DEFINITION
@@ -76,6 +77,10 @@ int main() {
 
 // Executed once on startup
 void setup() {
+    // Start timer and pass it to the robot logic
+    timer.start();
+    robot.setup_timer_instance(&timer);
+
     // Initialize the line detection sensor pins
     robot.setup_pins_linedetection(HW_LINE_DAT1, HW_LINE_DAT2);
 
@@ -90,6 +95,9 @@ void setup() {
     // Initialize the forklift motor & sensor pins
     robot.setup_pins_motor_forklift(HW_M3IN1, HW_M3IN2, HW_MRS3);
     robot.setup_pins_forklift_limit_switches(HW_HEFSW1, HW_HEFSW2); // limit_switch_up, limit_switch_down
+
+    // Initialize the distance sensor
+    robot.setup_distance_sensor(500); // read distance every 500ms
 }
 
 // Executed continuously

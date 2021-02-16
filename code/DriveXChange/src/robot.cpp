@@ -1,15 +1,27 @@
 #include "robot.h"
 #include "AnalogIn.h"
 #include "DigitalOut.h"
+#include "PinNames.h"
 #include "PwmOut.h"
+#include "VL53L1X.h"
+#include <chrono>
 
 ROBOT::ROBOT() :
 _line_sensor_left(A0), _line_sensor_right(A0),
 _motor_left_pwm1(D0), _motor_left_pwm2(D0), _motor_left_reset(D0), _motor_left_current_sensor(A0),
 _motor_right_pwm1(D0), _motor_right_pwm2(D0), _motor_right_reset(D0), _motor_right_current_sensor(A0),
 _motor_forklift_pwm1(D0), _motor_forklift_pwm2(D0), _motor_forklift_reset(D0),
-_limit_switch_up(D0),_limit_switch_down(D0) {
+_limit_switch_up(D0),_limit_switch_down(D0),
+_distance_sensor(I2C_SDA, I2C_SCL) {
+    
+}
 
+void ROBOT::run() {
+    update_distance_sensor();
+}
+
+void ROBOT::setup_timer_instance(mbed::Timer* timer) {
+    _main_timer = timer;
 }
 
 void ROBOT::setup_pins_linedetection(PinName line_sensor_left, PinName line_sensor_right) {
@@ -48,6 +60,26 @@ void ROBOT::setup_pins_forklift_limit_switches(PinName limit_switch_up, PinName 
     _limit_switch_down = mbed::DigitalIn(limit_switch_down);
 }
 
-void ROBOT::run() {
+void ROBOT::setup_distance_sensor(int read_interval) {
+    // Setup distance sensor and set I2C to 2.8V mode. In this mode 3.3V I2C is allowed.
+    _distance_sensor.begin();
 
+    // Set distance sensor read interval
+    distance_update_interval_in_ms = read_interval;
 }
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+void ROBOT::update_distance_sensor() {
+    uint32_t current_ms = _main_timer->read_ms();
+
+    if (_distance_sensor.newDataReady()) {
+        distance_in_front_of_robot_ms = _distance_sensor.getDistance();
+    } else {
+        if (current_ms - distance_read_last_milliseconds > distance_update_interval_in_ms) {
+            distance_read_last_milliseconds = current_ms;
+            _distance_sensor.startMeasurement();
+        }
+    }
+}
+#pragma GCC diagnostic pop
