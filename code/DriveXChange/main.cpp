@@ -24,7 +24,7 @@ PinName HW_M2IN1(D9); // Motor 2 control pin 1
 PinName HW_M2IN2(D10); // Motor 2 control pin 2
 
 PinName HW_M3IN1(A6); // Motor 3 control pin 1 (forklift)
-PinName HW_M3IN2(A7); // Motor 3 control pin 2 (forklift)
+PinName HW_M3IN2(D3); // Motor 3 control pin 2 (forklift)
 
 PinName HW_LINE_DAT1(A0); // Line detection sensor 1
 PinName HW_LINE_DAT2(A1); // Line detection sensor 2
@@ -98,6 +98,9 @@ void setup() {
 
     // Initialize the distance sensor
     robot.setup_distance_sensor(500); // read distance every 500ms
+
+    // Change the distance sensor offset
+    robot.set_distance_sensor_offset(85);
 }
 
 // Executed continuously

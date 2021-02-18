@@ -1,4 +1,5 @@
 #pragma once
+#include "BufferedSerial.h"
 #include <cstdint>
 #ifndef ROBOT_H
 #define ROBOT_H
@@ -12,6 +13,7 @@
 #include "Timer.h"
 #include "VL53L1X.h"
 
+extern uint32_t distance_read_last_milliseconds;
 
 class ROBOT {
     public:
@@ -26,14 +28,15 @@ class ROBOT {
         void setup_pins_motor_forklift(PinName pwm1, PinName pwm2, PinName rst);
         void setup_pins_forklift_limit_switches(PinName limit_switch_up, PinName limit_switch_down);
         void setup_distance_sensor(int read_interval);
+        void set_distance_sensor_offset(int offset);
     private:
         void update_distance_sensor();
 
         //
 
         int distance_update_interval_in_ms = 500;
-        uint16_t distance_in_front_of_robot_ms = 0;
-        uint32_t distance_read_last_milliseconds = 0;
+        uint16_t distance_in_front_of_robot_mm = 0;
+        uint16_t robot_distance_offset = 0; // What offset for the distance sensor to process? (EX.sensor detects 300mm but the sensor is placed back 100mm in the robot, that means the distance in front of the robot is actually 200mm)
 
         // 
         

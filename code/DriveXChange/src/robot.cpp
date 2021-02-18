@@ -4,7 +4,9 @@
 #include "PinNames.h"
 #include "PwmOut.h"
 #include "VL53L1X.h"
-#include <chrono>
+#include <cstdio>
+
+uint32_t distance_read_last_milliseconds = 0;
 
 ROBOT::ROBOT() :
 _line_sensor_left(A0), _line_sensor_right(A0),
@@ -16,9 +18,18 @@ _distance_sensor(I2C_SDA, I2C_SCL) {
     
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 void ROBOT::run() {
-    update_distance_sensor();
+    uint32_t current_ms = _main_timer->read_ms();
+    if (current_ms - distance_read_last_milliseconds > distance_update_interval_in_ms) {
+        distance_read_last_milliseconds = current_ms;
+        update_distance_sensor();
+    }
+
+    printf("Distance: %dmm\n", distance_in_front_of_robot_mm);
 }
+#pragma GCC diagnostic pop
 
 void ROBOT::setup_timer_instance(mbed::Timer* timer) {
     _main_timer = timer;
@@ -63,23 +74,21 @@ void ROBOT::setup_pins_forklift_limit_switches(PinName limit_switch_up, PinName 
 void ROBOT::setup_distance_sensor(int read_interval) {
     // Setup distance sensor and set I2C to 2.8V mode. In this mode 3.3V I2C is allowed.
     _distance_sensor.begin();
+    _distance_sensor.setDistanceMode(2); // 2: Long range
 
     // Set distance sensor read interval
     distance_update_interval_in_ms = read_interval;
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 void ROBOT::update_distance_sensor() {
-    uint32_t current_ms = _main_timer->read_ms();
 
     if (_distance_sensor.newDataReady()) {
-        distance_in_front_of_robot_ms = _distance_sensor.getDistance();
+        distance_in_front_of_robot_mm = _distance_sensor.getDistance() + robot_distance_offset;
     } else {
-        if (current_ms - distance_read_last_milliseconds > distance_update_interval_in_ms) {
-            distance_read_last_milliseconds = current_ms;
-            _distance_sensor.startMeasurement();
-        }
+        _distance_sensor.startMeasurement();
     }
 }
-#pragma GCC diagnostic pop
+
+void ROBOT::set_distance_sensor_offset(int offset) {
+    robot_distance_offset = offset;
+}
