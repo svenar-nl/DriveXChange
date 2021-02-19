@@ -30,8 +30,7 @@ VL53L1X::VL53L1X(PinName SDA, PinName SCL) : _i2c(SDA,SCL){
     _deviceAddress = defaultAddress_VL53L1X << 1;
     }
     
-bool VL53L1X::begin()
-{ 
+bool VL53L1X::begin() {
   //Check the device ID
   uint16_t modelID = readRegister16(VL53L1_IDENTIFICATION__MODEL_ID);
   if (modelID != 0xEACC){
@@ -43,8 +42,7 @@ bool VL53L1X::begin()
   int counter = 0;
   int  Firmware = readRegister16(VL53L1_FIRMWARE__SYSTEM_STATUS);
   printf("Firmware = %x\r\n", Firmware);
-  while ((Firmware & 0x01) == 0)
-  {
+  while ((Firmware & 0x01) == 0) {
     Firmware = readRegister16(VL53L1_FIRMWARE__SYSTEM_STATUS);
     printf("Firmware = %x\r\n", Firmware);
     if (counter++ == 100) return (false); //Sensor timed out
@@ -68,22 +66,19 @@ bool VL53L1X::begin()
 }
  
     
-void VL53L1X::startMeasurement(uint8_t offset)
-{
+void VL53L1X::startMeasurement(uint8_t offset) {
   offset = 0; //Start at a location within the configBlock array
   uint8_t address = 1 + offset; //Start at memory location 0x01, add offset
   char data_write[32];
   uint8_t leftToSend = sizeof(configBlock) - offset;
-  while (leftToSend > 0)
-  {
+  while (leftToSend > 0) {
 
     data_write[0] = 0; //MSB of register address 
     data_write[1] = address; //LSB of register address 
     
     uint8_t toSend = 30; //Max I2C buffer on Arduino is 32, and we need 2 bytes for address
     if (toSend > leftToSend) toSend = leftToSend;
-    for(int x = 0; x < toSend; x++)
-    {
+    for(int x = 0; x < toSend; x++) {
         data_write[x+2] = configBlock[x+address-1];
     }
     _i2c.write(_deviceAddress, data_write, toSend+2); 
@@ -93,43 +88,37 @@ void VL53L1X::startMeasurement(uint8_t offset)
   }
 }
  
-bool VL53L1X::newDataReady(void)
-{
+bool VL53L1X::newDataReady(void) {
   int read = readRegister(VL53L1_GPIO__TIO_HV_STATUS);
   if (read != 0x03) return(true); //New measurement!
   return(false); //No new data
 }
  
 //Reset sensor via software
-void VL53L1X::softReset()
-{
+void VL53L1X::softReset() {
   writeRegister(VL53L1_SOFT_RESET, 0x00); //Reset
   ThisThread::sleep_for(1ms); //Driver uses 100us
   writeRegister(VL53L1_SOFT_RESET, 0x01); //Exit reset
 }
  
-uint16_t VL53L1X::getDistance()
-{
+uint16_t VL53L1X::getDistance() {
   return (readRegister16(VL53L1_RESULT__FINAL_CROSSTALK_CORRECTED_RANGE_MM_SD0));
 }
  
-uint16_t VL53L1X::getSignalRate()
-{
+uint16_t VL53L1X::getSignalRate() {
   //From vl53l1_api.c line 2041
   uint16_t reading = readRegister16(VL53L1_RESULT__PEAK_SIGNAL_COUNT_RATE_CROSSTALK_CORRECTED_MCPS_SD0);// << 9; //FIXPOINT97TOFIXPOINT1616
   //float signalRate = (float)reading/65536.0;
   return (reading);
 }
  
-void VL53L1X::setDistanceMode(uint8_t mode)
-{
+void VL53L1X::setDistanceMode(uint8_t mode) {
     uint8_t periodA;
     uint8_t periodB;
     uint8_t phaseHigh;
     uint8_t phaseInit;
     
-    switch (mode)
-    {
+    switch (mode) {
         case 0:
           periodA = 0x07;
           periodB = 0x05;
@@ -169,13 +158,11 @@ void VL53L1X::setDistanceMode(uint8_t mode)
     
     _distanceMode = mode;
 }
-uint8_t VL53L1X::getDistanceMode()
-{
+uint8_t VL53L1X::getDistanceMode() {
     return _distanceMode;
 }
  
-uint8_t VL53L1X::getRangeStatus()
-{
+uint8_t VL53L1X::getRangeStatus() {
 #define VL53L1_DEVICEERROR_VCSELCONTINUITYTESTFAILURE  ( 1)
 #define VL53L1_DEVICEERROR_VCSELWATCHDOGTESTFAILURE    ( 2)
 #define VL53L1_DEVICEERROR_NOVHVVALUEFOUND             ( 3)
@@ -254,8 +241,7 @@ uint8_t VL53L1X::getRangeStatus()
   return measurementStatus;
 }
  
-uint8_t VL53L1X::readRegister(uint16_t registerAddr)
-{
+uint8_t VL53L1X::readRegister(uint16_t registerAddr) {
   uint8_t data;
   char data_write[2];
   char data_read[1];
@@ -268,8 +254,7 @@ uint8_t VL53L1X::readRegister(uint16_t registerAddr)
   return data;
 }
  
-uint16_t VL53L1X::readRegister16(uint16_t registerAddr)
-{
+uint16_t VL53L1X::readRegister16(uint16_t registerAddr) {
   uint8_t data_low;
   uint8_t data_high;
   uint16_t data;
@@ -287,8 +272,7 @@ uint16_t VL53L1X::readRegister16(uint16_t registerAddr)
   return data;
 }
  
-void VL53L1X::writeRegister(uint16_t registerAddr, uint8_t data)
-{
+void VL53L1X::writeRegister(uint16_t registerAddr, uint8_t data) {
     char data_write[3];
     data_write[0] = (registerAddr >> 8) & 0xFF; //MSB of register address 
     data_write[1] = registerAddr & 0xFF; //LSB of register address 
@@ -296,8 +280,7 @@ void VL53L1X::writeRegister(uint16_t registerAddr, uint8_t data)
     _i2c.write(_deviceAddress, data_write, 3); 
 }
  
-void VL53L1X::writeRegister16(uint16_t registerAddr, uint16_t data)
-{
+void VL53L1X::writeRegister16(uint16_t registerAddr, uint16_t data) {
     char data_write[4];
     data_write[0] = (registerAddr >> 8) & 0xFF; //MSB of register address 
     data_write[1] = registerAddr & 0xFF; //LSB of register address 
