@@ -14,7 +14,7 @@ _motor_left_pwm1(D0), _motor_left_pwm2(D0), _motor_left_reset(D0), _motor_left_c
 _motor_right_pwm1(D0), _motor_right_pwm2(D0), _motor_right_reset(D0), _motor_right_current_sensor(A0),
 _motor_forklift_pwm1(D0), _motor_forklift_pwm2(D0), _motor_forklift_reset(D0),
 _limit_switch_up(D0),_limit_switch_down(D0),
-_distance_sensor(I2C_SDA, I2C_SCL) {
+_distance_sensor(I2C_SDA, I2C_SCL), motor_left(D0, D0), motor_right(D0, D0) {
     
 }
 
