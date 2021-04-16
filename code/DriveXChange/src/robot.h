@@ -12,6 +12,7 @@
 #include "PwmOut.h"
 #include "Timer.h"
 #include "VL53L1X.h"
+#include "Motor.h"
 
 extern uint32_t distance_read_last_milliseconds;
 
@@ -63,6 +64,9 @@ class ROBOT {
         mbed::DigitalIn _limit_switch_down;
 
         VL53L1X _distance_sensor;
+
+        // Motor motor_left;  // TODO C++ why u so bitch
+        // Motor motor_right; // TODO C++ why u so bitch
 };
 
 #endif

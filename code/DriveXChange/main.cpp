@@ -5,6 +5,11 @@
 #include "mbed.h"
 
 #include "src/robot.h"
+
+//8 bit - 256
+//16 bit - 65535
+//32 bit - 4294967295
+
 // =====-----------------------------------------------=====
 //
 //                      PIN DEFINITION
@@ -97,7 +102,7 @@ void setup() {
     robot.setup_pins_forklift_limit_switches(HW_HEFSW1, HW_HEFSW2); // limit_switch_up, limit_switch_down
 
     // Initialize the distance sensor
-    robot.setup_distance_sensor(500); // read distance every 500ms
+    robot.setup_distance_sensor(50); // read distance every 500ms
 
     // Change the distance sensor offset
     robot.set_distance_sensor_offset(85);
