@@ -18,12 +18,15 @@
 DigitalIn HW_SWITCH1(D2); // user defined switch on the PCB
 DigitalOut HW_LED1(LED1); // Led on PCB
 
-PinName HW_MRS1(D6); // Motor 1 reset pin
+// PinName HW_MRS1(D6); // Motor 1 reset pin // D6
+PinName HW_MRS1(D2); // Motor 1 reset pin // D6
 PinName HW_MRS2(D7); // Motor 2 reset pin
 PinName HW_MRS3(D8); // Motor 3 reset pin (forklift)
 
-PinName HW_M1IN1(D11); // Motor 1 control pin 1
-PinName HW_M1IN2(D12); // Motor 1 control pin 2
+// PinName HW_M1IN1(D11); // Motor 1 control pin 1 // D11
+// PinName HW_M1IN2(D12); // Motor 1 control pin 2 // D12
+PinName HW_M1IN1(D4); // Motor 1 control pin 1 // D11
+PinName HW_M1IN2(D5); // Motor 1 control pin 2 // D12
 
 PinName HW_M2IN1(D9); // Motor 2 control pin 1
 PinName HW_M2IN2(D10); // Motor 2 control pin 2
@@ -111,10 +114,10 @@ void setup() {
 // Executed continuously
 void loop() {
     // Blink onboard LED when the switch is off, otherwise run the robot code
-    if (HW_SWITCH1 == 0) {
-        HW_LED1 = !HW_LED1;
-        ThisThread::sleep_for(500ms);
-    } else {
+    // if (HW_SWITCH1 == 0) {
+    //     HW_LED1 = !HW_LED1;
+    //     ThisThread::sleep_for(500ms);
+    // } else {
         robot.run();
-    }
+    // }
 }

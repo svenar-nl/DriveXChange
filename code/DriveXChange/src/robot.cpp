@@ -5,6 +5,7 @@
 #include "PwmOut.h"
 #include "VL53L1X.h"
 #include <cstdio>
+#include "HBridgeDCMotor.h"
 
 uint32_t distance_read_last_milliseconds = 0;
 
@@ -28,6 +29,9 @@ void ROBOT::run() {
     }
 
     printf("Distance: %dmm\n", distance_in_front_of_robot_mm);
+
+    _motor_left_reset = 1;
+    motor_left.forward(100);
 }
 #pragma GCC diagnostic pop
 
@@ -40,16 +44,20 @@ void ROBOT::setup_pins_linedetection(PinName line_sensor_left, PinName line_sens
     _line_sensor_right = mbed::AnalogIn(line_sensor_right);
 }
 
-void ROBOT::setup_pins_motor_left(PinName pwm1, PinName pwm2, PinName rst) {
+void ROBOT::setup_pins_motor_left(PinName pwm1, PinName pwm2) {
     _motor_left_pwm1 = mbed::PwmOut(pwm1);
     _motor_left_pwm2 = mbed::PwmOut(pwm2);
-    _motor_left_reset = mbed::DigitalOut(rst);
+
+    // motor_left = Motor(pwm1, pwm2);
+    // motor_left.setPins(pwm1, pwm2);
+    motor_left = new HBridgeDCMotor(pwm1, pwm2);
 }
 
-void ROBOT::setup_pins_motor_right(PinName pwm1, PinName pwm2, PinName rst) {
+void ROBOT::setup_pins_motor_right(PinName pwm1, PinName pwm2) {
     _motor_right_pwm1 = mbed::PwmOut(pwm1);
     _motor_right_pwm2 = mbed::PwmOut(pwm2);
-    _motor_right_reset = mbed::DigitalOut(rst);
+
+    // motor_right.setPins(pwm1, pwm2);
 }
 
 void ROBOT::setup_pins_motor_left_current_measurement(PinName current_sensor) {
@@ -60,10 +68,9 @@ void ROBOT::setup_pins_motor_right_current_measurement(PinName current_sensor) {
     _motor_right_current_sensor = mbed::AnalogIn(current_sensor);
 }
 
-void ROBOT::setup_pins_motor_forklift(PinName pwm1, PinName pwm2, PinName rst) {
+void ROBOT::setup_pins_motor_forklift(PinName pwm1, PinName pwm2) {
     _motor_forklift_pwm1 = mbed::PwmOut(pwm1);
     _motor_forklift_pwm2 = mbed::PwmOut(pwm2);
-    _motor_forklift_reset = mbed::DigitalOut(rst);
 }
 
 void ROBOT::setup_pins_forklift_limit_switches(PinName limit_switch_up, PinName limit_switch_down) {
