@@ -20,6 +20,15 @@
 // milliseconds
 #define DISTANCE_SENSOR_UPDATE_INTERVAL_IN_MS 500
 
+// The offset of the distance sensor. Change this variable to let the code
+// account for a difference in distance sensor mount position. Mounting the
+// sensor towards the front of the robot is the - direction. And mounting the
+// sensor towards the back of the robot is the + direction.
+// Example if the sensor is mounted 80mm deep in the robot, set it to 80, if the
+// sensor is placed 20mm in front of the robot, set it to -20. This variable
+// makes sure that the robot can stop at the right distance.
+#define DISTANCE_SENSOR_OFFSET_IN_MM 0
+
 // ------------------------------ //
 //             OBJECTS            //
 // ------------------------------ //
@@ -178,8 +187,10 @@ void loop() {
     distance_sensor_read_last_milliseconds = current_ms;
     // Has the measurement completed and is the data ready to be read
     if (distance_sensor.newDataReady()) {
-      // Update the distance variable for the robot to use
-      distance_measured_in_mm = distance_sensor.getDistance();
+      // Update the distance variable for the robot to use including the
+      // predefined offset(DISTANCE_SENSOR_OFFSET_IN_MM)
+      distance_measured_in_mm =
+          distance_sensor.getDistance() + DISTANCE_SENSOR_OFFSET_IN_MM;
     } else {
       // Tell the VL53L1X sensor to start a measurement.
       distance_sensor.startMeasurement();
