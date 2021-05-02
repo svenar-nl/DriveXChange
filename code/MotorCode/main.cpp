@@ -46,12 +46,17 @@
 // vector will be used, this is on the upper part of the camera, or further away
 // from robot. This will allow the robot to cut corners instead of following it
 // strictly.
-#define LINE_DETECTION_LOOK_AHEAD true
+#define LINE_DETECTION_LOOK_AHEAD false
 
 // When true print information over serial USB to the connected PC. Use a serial
 // terminal with a baudrate of 115200 to watch the output. Set this to false
 // when this information is not required to safe resources.
 #define DEBUG true
+
+// How many milliseconds should be between each debug message, serial
+// communication is slow, limiting its print interval helps the general code
+// speed to prevent unforseen issues. Uses the 'main_timer' for timing.
+#define DEBUG_PRINT_INTERVAL 500
 
 // ------------------------------ //
 //             OBJECTS            //
@@ -98,6 +103,11 @@ int16_t pixy2_line_vector_location = 0;
 // Ranging from 0%(left) to 100%(right). 50% is the center and thus the target
 // position for the line following.
 int16_t pixy2_line_vector_location_percentage = 0;
+
+// Automatically updated, the last time a debug message has printed is
+// stored in this variable in an unsigned 32 bit number. Time stored here is in
+// milliseconds and corresponds with DEBUG_PRINT_INTERVAL.
+uint32_t last_debug_message_time = 0;
 
 // ------------------------------ //
 //            FUNCTIONS           //
@@ -197,6 +207,27 @@ void loop() {
   float motor_left_power = 0.0;
   float motor_right_power = 0.0;
 
+  // Read the milliseconds since the startup of the microcontroller and store it
+  // in the local variable 'current_ms' accessable in the loop function. Stored
+  // in an unsigned 32 bit variable to prevent overflow. 32 bit unsigned integer
+  // has a max size of 4,294,967,295 which means that the microprocessor will
+  // overflow after about 49.7 days which is most plenty time to execute the
+  // required parcours. With an unsigned 16 bit number, which has a maximum size
+  // of 65535, it will overflow after about 10.9 minutes which would be enough
+  // but for safety an unsiged 32 bit number is used instead.
+  uint32_t current_ms =
+      chrono::duration_cast<chrono::milliseconds>(main_timer.elapsed_time())
+          .count();
+
+  // When true, a debug message will be printed to serial USB
+  bool do_print_debug = false;
+  if (DEBUG) {
+    if (current_ms - last_debug_message_time > DEBUG_PRINT_INTERVAL) {
+      last_debug_message_time = current_ms;
+      do_print_debug = true;
+    }
+  }
+
   // ---------- //
   //   PIXY2    //
   // ---------- //
@@ -210,14 +241,34 @@ void loop() {
   // Get a single vector from the Pixy2 camera.
   pixy_camera.line.getMainFeatures(LINE_VECTOR);
 
-  // Update the variable with the correct x coordinate as retrieved from the
-  // Pixy2
-  pixy2_line_vector_location = LINE_DETECTION_LOOK_AHEAD
-                                   ? pixy_camera.line.vectors[0].m_x1
-                                   : pixy_camera.line.vectors[0].m_x0;
+  // Only update the location when a vector is visible, otherwise retain the
+  // last known line location.
+  if (pixy_camera.line.numVectors > 0) {
+    // Update the variable with the correct x coordinate as retrieved from the
+    // Pixy2
+    pixy2_line_vector_location = LINE_DETECTION_LOOK_AHEAD
+                                     ? pixy_camera.line.vectors[0].m_x1
+                                     : pixy_camera.line.vectors[0].m_x0;
 
-  pixy2_line_vector_location_percentage =
-      (pixy2_line_vector_location * 100) / pixy_camera.frameWidth;
+    // Calculate the percentage of the vector's location on the camera frame
+    pixy2_line_vector_location_percentage =
+        (pixy2_line_vector_location * 100) / pixy_camera.frameWidth;
+  }
+
+  // Print the robot's uptime over serial USB when DEBUG is enabled(true).
+  if (do_print_debug) {
+    long milli = current_ms;
+    int hr = milli / 3600000;
+    milli = milli - 3600000 * hr;
+    int min = milli / 60000;
+    milli = milli - 60000 * min;
+    int sec = milli / 1000;
+    milli = milli - 1000 * sec;
+
+    // Format XX:XX ex. 11:04 only minutes and seconds are displayed, the robot
+    // won't run for more than a single hour for the demonstration.
+    printf("%s%d:%s%d ", min < 10 ? "0" : "", min, sec < 10 ? "0" : "", sec);
+  }
 
   // Print the line location over serial USB if definition DEBUG is
   // enabled(true).
@@ -225,37 +276,25 @@ void loop() {
   // W = wall, L = detected line position C = center     W^ L^C^^   W^.
   // The size (and thus resolution) can be adjusted by changing the varialbe
   // 'debug_line_position_width'.
-  uint8_t debug_line_position_width = 12;
-  for (int i = 0; i < debug_line_position_width; i++) {
-    if (i == 0 || i == debug_line_position_width - 1) {
-      printf("|");
-    } else if (i ==
-               (int)(pixy2_line_vector_location * debug_line_position_width) /
-                   100) {
-      printf("^");
-    } else if (debug_line_position_width % 2 == 0
-                   ? (i == (int)(debug_line_position_width / 2) ||
-                      i == (int)(debug_line_position_width / 2) - 1)
-                   : (i == (int)(debug_line_position_width / 2))) {
-      printf("|");
-    } else {
-      printf(" ");
+  if (do_print_debug) {
+    uint8_t debug_line_position_width = 12;
+    for (int i = 0; i < debug_line_position_width; i++) {
+      if (i == 0 || i == debug_line_position_width - 1) {
+        printf("|");
+      } else if (i ==
+                 (int)(pixy2_line_vector_location * debug_line_position_width) /
+                     100) {
+        printf("^");
+      } else if (debug_line_position_width % 2 == 0
+                     ? (i == (int)(debug_line_position_width / 2) ||
+                        i == (int)(debug_line_position_width / 2) - 1)
+                     : (i == (int)(debug_line_position_width / 2))) {
+        printf("|");
+      } else {
+        printf(" ");
+      }
     }
   }
-
-  // Line: |   ||   |
-
-  // Read the milliseconds since the startup of the microcontroller and store it
-  // in the local variable 'current_ms' accessable in the loop function. Stored
-  // in an unsigned 32 bit variable to prevent overflow. 32 bit unsigned integer
-  // has a max size of 4,294,967,295 which means that the microprocessor will
-  // overflow after about 49.7 days which is most plenty time to execute the
-  // required parcours. With an unsigned 16 bit number, which has a maximum size
-  // of 65535, it will overflow after about 10.9 minutes which would be enough
-  // but for safety an unsiged 32 bit number is used instead.
-  uint32_t current_ms =
-      chrono::duration_cast<chrono::milliseconds>(main_timer.elapsed_time())
-          .count();
 
   // ---------- //
   //  VL53L1X   //
@@ -300,7 +339,7 @@ void loop() {
                           : motor_right_power;
 
   // When DEBUG is enabled(true) print a new line character.
-  if (DEBUG)
+  if (do_print_debug)
     printf("\n");
 }
 
