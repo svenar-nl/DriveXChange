@@ -29,6 +29,30 @@
 // makes sure that the robot can stop at the right distance.
 #define DISTANCE_SENSOR_OFFSET_IN_MM 0
 
+// At what distance should the robot stop? The VL53L1X Time of Flight sensor
+// provides the distance. The distance is in millimeters.
+#define STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM 100
+
+// Limit the top speed of the robot drive motors. This value is in percent
+// ranging from 0% to 100%. When the left or right drive motor exedes the
+// maximum speed it will be limited to this value.
+#define ROBOT_MAX_SPEED_IN_PERCENT 100
+
+// Should the Pixy2 camera use the x coorninate in the distance(true) or
+// closeby(false). By using closeby(false) the x0 location returned by the Pixy2
+// line vector will be used, this is on the lower part of the camera, or closer
+// to the robot. This is a safe way of following ta line without 'corner
+// cutting'. By using distance(true) the x1 location returned by the Pixy2 line
+// vector will be used, this is on the upper part of the camera, or further away
+// from robot. This will allow the robot to cut corners instead of following it
+// strictly.
+#define LINE_DETECTION_LOOK_AHEAD true
+
+// When true print information over serial USB to the connected PC. Use a serial
+// terminal with a baudrate of 115200 to watch the output. Set this to false
+// when this information is not required to safe resources.
+#define DEBUG true
+
 // ------------------------------ //
 //             OBJECTS            //
 // ------------------------------ //
@@ -63,6 +87,17 @@ uint32_t distance_sensor_read_last_milliseconds = 0;
 // in millimeters. This variable is updated with an interval of
 // DISTANCE_SENSOR_UPDATE_INTERVAL_IN_MS milliseconds in the loop() function.
 int16_t distance_measured_in_mm = 0;
+
+// This is the raw location of the line as detected by the Pixy2 camera.
+// Depending of LINE_DETECTION_LOOK_AHEAD this can either be x0 or x1 from the
+// line vector.
+int16_t pixy2_line_vector_location = 0;
+
+// This takes the value from 'pixy2_line_vector_location' and calculates the
+// location percentage on the screen using the Pixy2's frame width variable.
+// Ranging from 0%(left) to 100%(right). 50% is the center and thus the target
+// position for the line following.
+int16_t pixy2_line_vector_location_percentage = 0;
 
 // ------------------------------ //
 //            FUNCTIONS           //
@@ -101,7 +136,7 @@ void setup() {
   // timing issues between different microcontrollers (STM32 <=SPI=> Pixy2)
   ThisThread::sleep_for(1000ms);
 
-  // Start the main timer
+  // Start the main timer to run as long as the robot is online.
   main_timer.start();
 
   // ---------- //
@@ -157,6 +192,59 @@ void loop() {
   //  GENERAL   //
   // ---------- //
 
+  // Initialize the two drive motor speed variables. By default this is 0(off)
+  // and will be updated in this loop() function.
+  float motor_left_power = 0.0;
+  float motor_right_power = 0.0;
+
+  // ---------- //
+  //   PIXY2    //
+  // ---------- //
+
+  // For unknown reasons it might occur that the resolution is not retreived
+  // correctly. By polling it in this loop() function it will correct itself.
+  if (pixy_camera.frameWidth == 0 || pixy_camera.frameHeight == 0) {
+    pixy_camera.getResolution();
+  }
+
+  // Get a single vector from the Pixy2 camera.
+  pixy_camera.line.getMainFeatures(LINE_VECTOR);
+
+  // Update the variable with the correct x coordinate as retrieved from the
+  // Pixy2
+  pixy2_line_vector_location = LINE_DETECTION_LOOK_AHEAD
+                                   ? pixy_camera.line.vectors[0].m_x1
+                                   : pixy_camera.line.vectors[0].m_x0;
+
+  pixy2_line_vector_location_percentage =
+      (pixy2_line_vector_location * 100) / pixy_camera.frameWidth;
+
+  // Print the line location over serial USB if definition DEBUG is
+  // enabled(true).
+  // Example output when debug_line_position_width is 12: |  ^ ||    |.
+  // W = wall, L = detected line position C = center     W^ L^C^^   W^.
+  // The size (and thus resolution) can be adjusted by changing the varialbe
+  // 'debug_line_position_width'.
+  uint8_t debug_line_position_width = 12;
+  for (int i = 0; i < debug_line_position_width; i++) {
+    if (i == 0 || i == debug_line_position_width - 1) {
+      printf("|");
+    } else if (i ==
+               (int)(pixy2_line_vector_location * debug_line_position_width) /
+                   100) {
+      printf("^");
+    } else if (debug_line_position_width % 2 == 0
+                   ? (i == (int)(debug_line_position_width / 2) ||
+                      i == (int)(debug_line_position_width / 2) - 1)
+                   : (i == (int)(debug_line_position_width / 2))) {
+      printf("|");
+    } else {
+      printf(" ");
+    }
+  }
+
+  // Line: |   ||   |
+
   // Read the milliseconds since the startup of the microcontroller and store it
   // in the local variable 'current_ms' accessable in the loop function. Stored
   // in an unsigned 32 bit variable to prevent overflow. 32 bit unsigned integer
@@ -196,6 +284,24 @@ void loop() {
       distance_sensor.startMeasurement();
     }
   }
+
+  // Is the distance in front of the robot smaller than the predefined target
+  // distance. Stop the motors.
+  if (distance_measured_in_mm < STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM) {
+  }
+
+  // Limit the drive motors maximum speed. This works with a single line if else
+  // statement in the format: (variable = condition ? true : false).
+  motor_left_power = motor_left_power > ROBOT_MAX_SPEED_IN_PERCENT / 100.0
+                         ? ROBOT_MAX_SPEED_IN_PERCENT / 100.0
+                         : motor_left_power;
+  motor_right_power = motor_right_power > ROBOT_MAX_SPEED_IN_PERCENT / 100.0
+                          ? ROBOT_MAX_SPEED_IN_PERCENT / 100.0
+                          : motor_right_power;
+
+  // When DEBUG is enabled(true) print a new line character.
+  if (DEBUG)
+    printf("\n");
 }
 
 // <<EOF>>
