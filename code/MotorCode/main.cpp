@@ -18,7 +18,7 @@
 
 // Update interval of the Time-of-Flight(Vl53L1X) sensor. Time is in
 // milliseconds
-#define DISTANCE_SENSOR_UPDATE_INTERVAL_IN_MS 500
+#define DISTANCE_SENSOR_UPDATE_INTERVAL_IN_MS 50
 
 // The offset of the distance sensor. Change this variable to let the code
 // account for a difference in distance sensor mount position. Mounting the
@@ -33,9 +33,11 @@
 // provides the distance. The distance is in millimeters.
 #define STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM 100
 
-// Limit the top speed of the robot drive motors. This value is in percent
-// ranging from 0% to 100%. When the left or right drive motor exedes the
-// maximum speed it will be limited to this value.
+// Limit the minimal and top speed of the robot drive motors. This value is in
+// percent ranging from 0% to 100%. When the left or right drive motor exedes
+// the maximum speed it will be limited to this value. And below the minimal
+// value , the motors will be stopped.
+#define ROBOT_MIN_SPEED_IN_PERCENT 20
 #define ROBOT_MAX_SPEED_IN_PERCENT 100
 
 // Should the Pixy2 camera use the x coorninate in the distance(true) or
@@ -58,6 +60,11 @@
 // speed to prevent unforseen issues. Uses the 'main_timer' for timing.
 #define DEBUG_PRINT_INTERVAL 500
 
+// defined constrain() as a macro (rather than a function)
+// Constrains a number to be within a range.
+#define constrain(amt, low, high)                                              \
+  ((amt) < (low) ? (low) : ((amt) > (high) ? (high) : (amt)))
+
 // ------------------------------ //
 //             OBJECTS            //
 // ------------------------------ //
@@ -71,7 +78,7 @@ VL53L1X distance_sensor(I2C_SDA, I2C_SCL); // SDA(D4) SCL(D5)
 Pixy2 pixy_camera;
 
 // Motor on the left side of the motor (PWM FWD BCK)
-Motor motor_left(A6, D4, D5);
+Motor motor_left(A6, D8, D9);
 
 // Motor on the right side of the motor (PWM FWD BCK)
 Motor motor_right(D3, D6, D7);
@@ -132,6 +139,11 @@ int main() {
   while (true) {
     loop();
   }
+}
+
+// Map a specific value to a different range
+long map(long x, long in_min, long in_max, long out_min, long out_max) {
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
 // initialize things like the pixy camera,  motor controllers, distance sensor,
@@ -236,6 +248,7 @@ void loop() {
   // correctly. By polling it in this loop() function it will correct itself.
   if (pixy_camera.frameWidth == 0 || pixy_camera.frameHeight == 0) {
     pixy_camera.getResolution();
+    pixy_camera.setLamp(1, 1);
   }
 
   // Get a single vector from the Pixy2 camera.
@@ -281,9 +294,9 @@ void loop() {
     for (int i = 0; i < debug_line_position_width; i++) {
       if (i == 0 || i == debug_line_position_width - 1) {
         printf("|");
-      } else if (i ==
-                 (int)(pixy2_line_vector_location * debug_line_position_width) /
-                     100) {
+      } else if (i == (int)(pixy2_line_vector_location_percentage *
+                            debug_line_position_width) /
+                          100) {
         printf("^");
       } else if (debug_line_position_width % 2 == 0
                      ? (i == (int)(debug_line_position_width / 2) ||
@@ -294,7 +307,27 @@ void loop() {
         printf(" ");
       }
     }
+
+    printf(" \"%d\" ", pixy2_line_vector_location_percentage);
   }
+
+  ////////////////////////////////////////////
+  int thresholdlow = 5;
+  if (pixy2_line_vector_location_percentage < 50 - thresholdlow) {
+    motor_left_power = map(pixy2_line_vector_location_percentage, 0, 50, 0, 100) / 100.0;
+    motor_left_power = 0;
+  } else {
+    motor_left_power = 1.0;
+  }
+
+  if (pixy2_line_vector_location_percentage > 50 + thresholdlow) {
+    motor_right_power = map(pixy2_line_vector_location_percentage, 100, 50, 0, 100) / 100.0;
+        motor_right_power = 0;
+  } else {
+    motor_right_power = 1.0;
+  }
+
+  ////////////////////////////////////////////
 
   // ---------- //
   //  VL53L1X   //
@@ -329,6 +362,22 @@ void loop() {
   if (distance_measured_in_mm < STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM) {
   }
 
+  ///////////////////////////////////////
+  if (distance_measured_in_mm < STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM + 500) {
+    motor_left_power = .5;
+    motor_right_power = .5;
+  }
+
+  float a = constrain(
+      (distance_measured_in_mm - STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM) / 100.0,
+      -1, 1);
+
+  if (distance_measured_in_mm > 0) {
+    motor_left_power *= a;
+    motor_right_power *= a;
+  }
+  ////////////////////////////////////////
+
   // Limit the drive motors maximum speed. This works with a single line if else
   // statement in the format: (variable = condition ? true : false).
   motor_left_power = motor_left_power > ROBOT_MAX_SPEED_IN_PERCENT / 100.0
@@ -338,9 +387,27 @@ void loop() {
                           ? ROBOT_MAX_SPEED_IN_PERCENT / 100.0
                           : motor_right_power;
 
+  // Limit the drive motors minimal speed. This works with a single line if else
+  // statement in the format: (variable = condition ? true : false).
+  motor_left_power =
+      (abs(motor_left_power) < ROBOT_MIN_SPEED_IN_PERCENT / 100.0)
+          ? 0
+          : motor_left_power;
+
+  motor_right_power =
+      (abs(motor_right_power) < ROBOT_MIN_SPEED_IN_PERCENT / 100.0)
+          ? 0
+          : motor_right_power;
+
+  motor_left.speed(motor_left_power);
+  motor_right.speed(motor_right_power);
+
   // When DEBUG is enabled(true) print a new line character.
-  if (do_print_debug)
+  if (do_print_debug) {
+    printf(" [%4d] :%.2f: {%.2f, %.2f}", distance_measured_in_mm, a,
+           motor_left_power, motor_right_power);
     printf("\n");
+  }
 }
 
 // <<EOF>>
