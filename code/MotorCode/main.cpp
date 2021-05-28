@@ -69,6 +69,9 @@
 // The wheel diameter of the robot divided by 1000
 #define WHEEL_DIAMETER 150 / 1000
 
+// Target distance to deliver the packet at
+#define PACKET_TARGET_DISTANCE_IN_MM 10 * 1000
+
 // Rough PI
 #define PI 3.1415
 
