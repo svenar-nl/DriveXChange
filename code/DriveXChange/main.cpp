@@ -82,6 +82,14 @@ void loop();
 //
 // =====-----------------------------------------------=====
 
+uint16_t current_distance_travelled = 0;
+    	
+void compare_distance()
+{
+    
+
+}
+
 int main() {
   setup();
 
