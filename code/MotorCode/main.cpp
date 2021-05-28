@@ -284,7 +284,7 @@ void loop() {
     if (!halleffect_pulse_detected) {
       robot_distance_traveled += (float)WHEEL_DIAMETER * PI;
 
-    //   Deze toggle functie zorgt dat dit gedeelte van de functie niet meerdere keren per rondslag afstand optelt.
+      // Deze toggle functie zorgt dat dit gedeelte van de functie niet meerdere keren per rondslag afstand optelt.
       halleffect_pulse_detected = true;
     }
   } else {
