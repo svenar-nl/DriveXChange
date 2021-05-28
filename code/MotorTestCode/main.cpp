@@ -1,5 +1,7 @@
+#include "DigitalOut.h"
 #include "Motor.h"
 #include "Pixy2.h"
+#include "PwmOut.h"
 #include "mbed.h"
 
 Pixy2 pixy;
@@ -8,8 +10,19 @@ bool timer_running = false;
 
 uint8_t x0 = 0, y0 = 0, x1 = 0, y1 = 0;
 
-Motor motor_left(A6, D4, D5);  // pwm, fwd, rev
-Motor motor_right(D3, D6, D7); // pwm, fwd, rev
+// Motor on the side (PWM FWD BCK)
+Motor motor_left(A6, D8, D9);
+Motor motor_right(D3, D6, D7);
+
+#define TOP_SPEED 0.3
+
+// PwmOut test_a6(A6);
+// DigitalOut test_d4(D4);
+// DigitalOut test_d5(D5);
+
+// PwmOut test_d3(D3);
+// DigitalOut test_d6(D6);
+// DigitalOut test_d7(D7);
 
 void setup();
 void loop();
@@ -40,6 +53,13 @@ void setup() {
 }
 
 void loop() {
+
+  // test_a6 = 0;
+  // test_d4
+
+  // test_d3 = 0;
+  //   return;
+
   pixy.line.getMainFeatures();
   //   pixy.line.getAllFeatures();
 
@@ -72,10 +92,10 @@ void loop() {
 
   //   printf("(%d, %d)\n", x0, y0);
 
-  int used_x_variable = x0;
+  int used_x_variable = x1;
 
-  int location_percentage =
-      map(used_x_variable, 0, pixy.frameWidth, 0, 100); // 0 = left 50 = center 100 = right
+  int location_percentage = map(used_x_variable, 0, pixy.frameWidth, 0,
+                                100); // 0 = left 50 = center 100 = right
 
   for (int i = 0; i < 20; i++) {
     if (i == 0 || i == 20 - 1) {
@@ -161,6 +181,9 @@ void loop() {
     power_left = 0.0;
     power_right = 0.0;
   }
+
+  power_left = power_left > TOP_SPEED ? TOP_SPEED : power_left;
+  power_right = power_right > TOP_SPEED ? TOP_SPEED : power_right;
 
   motor_left.speed(power_left);
   motor_right.speed(power_right);

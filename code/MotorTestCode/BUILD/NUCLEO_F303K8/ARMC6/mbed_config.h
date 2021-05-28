@@ -162,6 +162,8 @@
 #define MBED_CONF_LWIP_MEMP_NUM_TCPIP_MSG_INPKT                               8                                                                                                // set by library:lwip
 #define MBED_CONF_LWIP_MEMP_NUM_TCP_SEG                                       16                                                                                               // set by library:lwip
 #define MBED_CONF_LWIP_MEM_SIZE                                               2310                                                                                             // set by library:lwip[STM]
+#define MBED_CONF_LWIP_ND6_QUEUEING                                           0                                                                                                // set by library:lwip
+#define MBED_CONF_LWIP_ND6_RDNSS_MAX_DNS_SERVERS                              0                                                                                                // set by library:lwip
 #define MBED_CONF_LWIP_NUM_NETBUF                                             8                                                                                                // set by library:lwip
 #define MBED_CONF_LWIP_NUM_PBUF                                               8                                                                                                // set by library:lwip
 #define MBED_CONF_LWIP_PBUF_POOL_SIZE                                         5                                                                                                // set by library:lwip
@@ -360,6 +362,7 @@
 #define MBED_CONF_TARGET_LSE_AVAILABLE                                        0                                                                                                // set by target:NUCLEO_F303K8
 #define MBED_CONF_TARGET_LSE_DRIVE_LOAD_LEVEL                                 RCC_LSEDRIVE_LOW                                                                                 // set by target:MCU_STM32F3
 #define MBED_CONF_TARGET_MPU_ROM_END                                          0x0fffffff                                                                                       // set by target:Target
+#define MBED_CONF_TARGET_RTC_CLOCK_SOURCE                                     USE_RTC_CLK_LSE_OR_LSI                                                                           // set by target:MCU_STM32
 #define MBED_CONF_TARGET_TICKLESS_FROM_US_TICKER                              0                                                                                                // set by target:Target
 #define MBED_CONF_TARGET_XIP_ENABLE                                           0                                                                                                // set by target:Target
 #define MBED_CONF_TELIT_HE910_BAUDRATE                                        115200                                                                                           // set by library:TELIT_HE910
@@ -388,6 +391,7 @@
 #define MBED_LFS_PROG_SIZE                                                    64                                                                                               // set by library:littlefs
 #define MBED_LFS_READ_SIZE                                                    64                                                                                               // set by library:littlefs
 #define MBED_STACK_DUMP_ENABLED                                               0                                                                                                // set by library:platform
+#define MBED_TRACE_COLOR_THEME                                                0                                                                                                // set by library:mbed-trace
 #define MEM_ALLOC                                                             malloc                                                                                           // set by library:mbed-trace
 #define MEM_FREE                                                              free                                                                                             // set by library:mbed-trace
 #define PPP_DEBUG                                                             0                                                                                                // set by library:ppp
