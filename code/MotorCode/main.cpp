@@ -69,6 +69,8 @@
 // The wheel diameter of the robot divided by 1000
 #define WHEEL_DIAMETER 150 / 1000
 
+#define NUMBER_OF_MAGNETS_ON_WHEEL 1
+
 // Target distance to deliver the packet at
 #define PACKET_TARGET_DISTANCE_IN_MM 10 * 1000
 
@@ -137,6 +139,9 @@ float robot_distance_traveled = 0;
 // execution while the pulse is active
 bool halleffect_pulse_detected = false;
 
+// True if the package has been delivered and the robot can drive to the end
+bool has_delivered_package = false;
+
 // ------------------------------ //
 //            FUNCTIONS           //
 // ------------------------------ //
@@ -164,6 +169,23 @@ void tone(uint16_t period, uint16_t delay) {
   motor_right.period(0.001);
   motor_left.speed(0.0f);
   motor_right.speed(0.0f);
+}
+
+/**
+    @return true to end loop
+*/
+bool hefmotor() {
+    //programmeer hefmotor
+    return false;
+}
+
+void handle_packet_delivery() {
+    if (has_delivered_package) return;
+
+    if (robot_distance_traveled >= PACKET_TARGET_DISTANCE_IN_MM) {
+        while (!hefmotor());
+        has_delivered_package = true;
+    }
 }
 
 // Executed when the microcontroller started, needs to have a while loop that
@@ -285,7 +307,7 @@ void loop() {
 
   if (!halleffect) {
     if (!halleffect_pulse_detected) {
-      robot_distance_traveled += (float)WHEEL_DIAMETER * PI;
+      robot_distance_traveled += (float)((float)WHEEL_DIAMETER * PI) / (float)NUMBER_OF_MAGNETS_ON_WHEEL;
 
       // Deze toggle functie zorgt dat dit gedeelte van de functie niet meerdere keren per rondslag afstand optelt.
       halleffect_pulse_detected = true;
@@ -297,6 +319,13 @@ void loop() {
   if (do_print_debug) {
     printf("[traveled %.2fm] ", robot_distance_traveled);
   }
+
+  // ---------- //
+  //  PACKAGE   //
+  //  HANDLING  //
+  // ---------- //
+
+  handle_packet_delivery();
 
   // ---------- //
   //   PIXY2    //
