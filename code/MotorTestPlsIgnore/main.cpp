@@ -47,7 +47,7 @@ int main() {
 
       int noteDuration = melody[thisNote + 1];
 
-      printf("%d\t%d\t%.2f\n", thisNote / 2, melody[thisNote], noteDuration);
+      printf("%d\t%d\t%d\n", thisNote / 2, melody[thisNote], noteDuration);
 
       int note = melody[thisNote];
       tone(note, noteDuration);
@@ -59,7 +59,7 @@ int main() {
   }
 }
 
-void tone(int period, float delay) {
+void tone(int period, int delay) {
   int note = 2200 - period;
   if (period > 0) {
     motor_left.period_us(note);
