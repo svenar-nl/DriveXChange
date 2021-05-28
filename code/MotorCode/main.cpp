@@ -7,6 +7,7 @@
 #include "ThisThread.h"
 #include "VL53L1X.h"
 #include "mbed.h"
+#include <cstdint>
 
 // ------------------------------ //
 //           DEFINITIONS          //
@@ -65,6 +66,12 @@
 #define constrain(amt, low, high)                                              \
   ((amt) < (low) ? (low) : ((amt) > (high) ? (high) : (amt)))
 
+// The wheel diameter of the robot divided by 1000
+#define WHEEL_DIAMETER 150 / 1000
+
+// Rough PI
+#define PI 3.1415
+
 // ------------------------------ //
 //             OBJECTS            //
 // ------------------------------ //
@@ -85,6 +92,9 @@ Motor motor_right(D3, D6, D7);
 
 // Set-up a default timer that runs since the robot has initialized
 Timer main_timer;
+
+// Hall-effect sensor to measure the rotations of then weel
+DigitalIn halleffect(D2, PullDown);
 
 // ------------------------------ //
 //            VARIABLES           //
@@ -116,16 +126,42 @@ int16_t pixy2_line_vector_location_percentage = 0;
 // milliseconds and corresponds with DEBUG_PRINT_INTERVAL.
 uint32_t last_debug_message_time = 0;
 
+// How far has the robot traveled in meters? Calculated using the halleffect
+// sensor on one of the robots wheels
+float robot_distance_traveled = 0;
+
+// Has a pulse been detected on the halleffect sensor? Prevents continuous
+// execution while the pulse is active
+bool halleffect_pulse_detected = false;
+
 // ------------------------------ //
 //            FUNCTIONS           //
 // ------------------------------ //
 
 // Dummy functions to be populated below, needed here because it needs to be
 // defined before 'int main() {'
+
 // setup is executed once when the code starts up
 void setup();
 // loop is executed continuesly after setup has finished
 void loop();
+
+// Play tones on the motors
+void tone(uint16_t period, uint16_t delay) {
+  uint16_t note = 2200 - period;
+  if (period > 0) {
+    motor_left.period_us(note);
+    motor_right.period_us(note);
+    motor_left.speed(0.1f);
+    motor_right.speed(0.1f);
+  }
+
+  ThisThread::sleep_for(delay);
+  motor_left.period(0.001);
+  motor_right.period(0.001);
+  motor_left.speed(0.0f);
+  motor_right.speed(0.0f);
+}
 
 // Executed when the microcontroller started, needs to have a while loop that
 // runs forever to prevent a dead lock that requires a power-cycle. This
@@ -241,6 +277,23 @@ void loop() {
   }
 
   // ---------- //
+  // HALLEFFECT //
+  // ---------- //
+
+  if (!halleffect) {
+    if (!halleffect_pulse_detected) {
+      robot_distance_traveled += (float)WHEEL_DIAMETER * PI;
+      halleffect_pulse_detected = true;
+    }
+  } else {
+    halleffect_pulse_detected = false;
+  }
+
+  if (do_print_debug) {
+    printf("[traveled %.2fm] ", robot_distance_traveled);
+  }
+
+  // ---------- //
   //   PIXY2    //
   // ---------- //
 
@@ -314,15 +367,17 @@ void loop() {
   ////////////////////////////////////////////
   int thresholdlow = 5;
   if (pixy2_line_vector_location_percentage < 50 - thresholdlow) {
-    motor_left_power = map(pixy2_line_vector_location_percentage, 0, 50, 0, 100) / 100.0;
+    motor_left_power =
+        map(pixy2_line_vector_location_percentage, 0, 50, 0, 100) / 100.0;
     motor_left_power = 0;
   } else {
     motor_left_power = 1.0;
   }
 
   if (pixy2_line_vector_location_percentage > 50 + thresholdlow) {
-    motor_right_power = map(pixy2_line_vector_location_percentage, 100, 50, 0, 100) / 100.0;
-        motor_right_power = 0;
+    motor_right_power =
+        map(pixy2_line_vector_location_percentage, 100, 50, 0, 100) / 100.0;
+    motor_right_power = 0;
   } else {
     motor_right_power = 1.0;
   }
@@ -360,6 +415,13 @@ void loop() {
   // Is the distance in front of the robot smaller than the predefined target
   // distance. Stop the motors.
   if (distance_measured_in_mm < STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM) {
+
+    tone(1500, 100);
+    tone(1300, 100);
+    tone(1100, 100);
+    motor_left_power = 0;
+    motor_right_power = 0;
+    // return;
   }
 
   ///////////////////////////////////////
