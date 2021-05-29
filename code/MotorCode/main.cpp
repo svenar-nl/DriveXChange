@@ -317,23 +317,22 @@ void loop() {
   // HALLEFFECT //
   // ---------- //
 
-  //   if (!halleffect) {
-  //     if (!halleffect_pulse_detected) {
-  //       robot_distance_traveled += (float)((float)WHEEL_DIAMETER * PI) /
-  //                                  (float)NUMBER_OF_MAGNETS_ON_WHEEL;
+  if (!halleffect) {
+    if (!halleffect_pulse_detected) {
+      robot_distance_traveled += (float)((float)WHEEL_DIAMETER * PI) /
+                                 (float)NUMBER_OF_MAGNETS_ON_WHEEL;
 
-  //       // Deze toggle functie zorgt dat dit gedeelte van de functie niet
-  //       meerdere
-  //       // keren per rondslag afstand optelt.
-  //       halleffect_pulse_detected = true;
-  //     }
-  //   } else {
-  //     halleffect_pulse_detected = false;
-  //   }
+      // Making sure that the halleffect sensor does not trigger more than once
+      // in the same loop
+      halleffect_pulse_detected = true;
+    }
+  } else {
+    halleffect_pulse_detected = false;
+  }
 
-  //   if (do_print_debug) {
-  //     printf("[traveled %.2fm] ", robot_distance_traveled);
-  //   }
+  if (do_print_debug) {
+    printf("[traveled %.2fm] ", robot_distance_traveled);
+  }
 
   // ---------- //
   //  PACKAGE   //
@@ -436,11 +435,11 @@ void loop() {
   uint8_t aa = (50 - abs(pixy2_line_vector_location_percentage - 50)) * 2;
 
   if (do_print_debug) {
-      printf(" <%d> ", aa);
+    printf(" <%d> ", aa);
   }
 
-  motor_left_power *= (float) aa / 100.0f;
-  motor_right_power *= (float) aa / 100.0f;
+  motor_left_power *= (float)aa / 100.0f;
+  motor_right_power *= (float)aa / 100.0f;
 
   ////////////////////////////////////////////
 
