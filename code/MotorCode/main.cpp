@@ -2,7 +2,10 @@
 //            INCLUDES            //
 // ------------------------------ //
 
+#include "InterruptIn.h"
 #include "Motor.h"
+#include "PinNames.h"
+#include "PinNamesTypes.h"
 #include "Pixy2.h"
 #include "ThisThread.h"
 #include "VL53L1X.h"
@@ -49,7 +52,7 @@
 // vector will be used, this is on the upper part of the camera, or further away
 // from robot. This will allow the robot to cut corners instead of following it
 // strictly.
-#define LINE_DETECTION_LOOK_AHEAD false
+#define LINE_DETECTION_LOOK_AHEAD true
 
 // When true print information over serial USB to the connected PC. Use a serial
 // terminal with a baudrate of 115200 to watch the output. Set this to false
@@ -81,6 +84,9 @@
 //             OBJECTS            //
 // ------------------------------ //
 
+// Hall-effect sensor to measure the rotations of then weel
+DigitalIn halleffect(D2);
+
 // Distance tracking sensor to measure the distance in front of the robot, uses
 // the I2C protocol
 VL53L1X distance_sensor(I2C_SDA, I2C_SCL); // SDA(D4) SCL(D5)
@@ -97,9 +103,6 @@ Motor motor_right(D3, D6, D7);
 
 // Set-up a default timer that runs since the robot has initialized
 Timer main_timer;
-
-// Hall-effect sensor to measure the rotations of then weel
-DigitalIn halleffect(D2, PullDown);
 
 // ------------------------------ //
 //            VARIABLES           //
@@ -175,17 +178,19 @@ void tone(uint16_t period, uint16_t delay) {
     @return true to end loop
 */
 bool hefmotor() {
-    //programmeer hefmotor
-    return false;
+  // programmeer hefmotor
+  return false;
 }
 
 void handle_packet_delivery() {
-    if (has_delivered_package) return;
+  if (has_delivered_package)
+    return;
 
-    if (robot_distance_traveled >= PACKET_TARGET_DISTANCE_IN_MM) {
-        while (!hefmotor());
-        has_delivered_package = true;
+  if (robot_distance_traveled >= PACKET_TARGET_DISTANCE_IN_MM) {
+    while (!hefmotor()) {
     }
+    has_delivered_package = true;
+  }
 }
 
 // Executed when the microcontroller started, needs to have a while loop that
@@ -266,6 +271,13 @@ void setup() {
   // shouldn't. Just a safety measure.
   motor_left.speed(0.0);
   motor_right.speed(0.0);
+
+  printf("// ---------- //\n");
+  printf("//    ITRM    //\n");
+  printf("// ---------- //\n");
+  printf("Running on Mbed OS %d.%d.%d.\n", MBED_MAJOR_VERSION,
+         MBED_MINOR_VERSION, MBED_PATCH_VERSION);
+  printf("\n");
 }
 
 // Executed continously to let the robot function as it should. Like line
@@ -305,20 +317,23 @@ void loop() {
   // HALLEFFECT //
   // ---------- //
 
-  if (!halleffect) {
-    if (!halleffect_pulse_detected) {
-      robot_distance_traveled += (float)((float)WHEEL_DIAMETER * PI) / (float)NUMBER_OF_MAGNETS_ON_WHEEL;
+  //   if (!halleffect) {
+  //     if (!halleffect_pulse_detected) {
+  //       robot_distance_traveled += (float)((float)WHEEL_DIAMETER * PI) /
+  //                                  (float)NUMBER_OF_MAGNETS_ON_WHEEL;
 
-      // Deze toggle functie zorgt dat dit gedeelte van de functie niet meerdere keren per rondslag afstand optelt.
-      halleffect_pulse_detected = true;
-    }
-  } else {
-    halleffect_pulse_detected = false;
-  }
+  //       // Deze toggle functie zorgt dat dit gedeelte van de functie niet
+  //       meerdere
+  //       // keren per rondslag afstand optelt.
+  //       halleffect_pulse_detected = true;
+  //     }
+  //   } else {
+  //     halleffect_pulse_detected = false;
+  //   }
 
-  if (do_print_debug) {
-    printf("[traveled %.2fm] ", robot_distance_traveled);
-  }
+  //   if (do_print_debug) {
+  //     printf("[traveled %.2fm] ", robot_distance_traveled);
+  //   }
 
   // ---------- //
   //  PACKAGE   //
@@ -377,7 +392,7 @@ void loop() {
   // The size (and thus resolution) can be adjusted by changing the varialbe
   // 'debug_line_position_width'.
   if (do_print_debug) {
-    uint8_t debug_line_position_width = 12;
+    uint8_t debug_line_position_width = 16;
     for (int i = 0; i < debug_line_position_width; i++) {
       if (i == 0 || i == debug_line_position_width - 1) {
         printf("|");
@@ -399,11 +414,13 @@ void loop() {
   }
 
   ////////////////////////////////////////////
+
   int thresholdlow = 5;
+
   if (pixy2_line_vector_location_percentage < 50 - thresholdlow) {
     motor_left_power =
         map(pixy2_line_vector_location_percentage, 0, 50, 0, 100) / 100.0;
-    motor_left_power = 0;
+    // motor_left_power = 0;
   } else {
     motor_left_power = 1.0;
   }
@@ -411,10 +428,19 @@ void loop() {
   if (pixy2_line_vector_location_percentage > 50 + thresholdlow) {
     motor_right_power =
         map(pixy2_line_vector_location_percentage, 100, 50, 0, 100) / 100.0;
-    motor_right_power = 0;
+    // motor_right_power = 0;
   } else {
     motor_right_power = 1.0;
   }
+
+  uint8_t aa = (50 - abs(pixy2_line_vector_location_percentage - 50)) * 2;
+
+  if (do_print_debug) {
+      printf(" <%d> ", aa);
+  }
+
+  motor_left_power *= (float) aa / 100.0f;
+  motor_right_power *= (float) aa / 100.0f;
 
   ////////////////////////////////////////////
 
@@ -495,15 +521,15 @@ void loop() {
           ? 0
           : motor_right_power;
 
-  motor_left.speed(motor_left_power);
-  motor_right.speed(motor_right_power);
-
-  // When DEBUG is enabled(true) print a new line character.
+  // When DEBUG is enabled(true) print motor power and new line character.
   if (do_print_debug) {
     printf(" [%4d] :%.2f: {%.2f, %.2f}", distance_measured_in_mm, a,
            motor_left_power, motor_right_power);
     printf("\n");
   }
+
+  motor_left.speed(motor_left_power);
+  motor_right.speed(motor_right_power);
 }
 
 // <<EOF>>

@@ -14,7 +14,7 @@ uint8_t x0 = 0, y0 = 0, x1 = 0, y1 = 0;
 Motor motor_left(A6, D8, D9);
 Motor motor_right(D3, D6, D7);
 
-#define TOP_SPEED 0.3
+#define TOP_SPEED 1
 
 // PwmOut test_a6(A6);
 // DigitalOut test_d4(D4);
