@@ -226,8 +226,7 @@ BUILD/NUCLEO_F303K8/ARMC6/main.o: main.cpp \
   mbed-os/hal/include/hal/i2c_api.h \
   mbed-os/drivers/include/drivers/I2CSlave.h \
   mbed-os/drivers/include/drivers/CAN.h \
-  mbed-os/drivers/include/drivers/interfaces/InterfaceCAN.h \
-  mbed-os/hal/include/hal/can_helper.h mbed-os/hal/include/hal/can_api.h \
+  mbed-os/hal/include/hal/can_api.h mbed-os/hal/include/hal/can_helper.h \
   mbed-os/drivers/include/drivers/UnbufferedSerial.h \
   mbed-os/drivers/include/drivers/SerialBase.h \
   mbed-os/hal/include/hal/serial_api.h \

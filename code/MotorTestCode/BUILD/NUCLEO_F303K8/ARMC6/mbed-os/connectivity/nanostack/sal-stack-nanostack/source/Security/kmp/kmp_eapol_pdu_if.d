@@ -45,5 +45,4 @@ BUILD/NUCLEO_F303K8/ARMC6/mbed-os/connectivity/nanostack/sal-stack-nanostack/sou
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/Security/kmp/kmp_api.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/Security/kmp/kmp_eapol_pdu_if.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/MAC/mpx_api.h \
-  mbed-os/connectivity/nanostack/sal-stack-nanostack/nanostack/mac_mcps.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/ws/ws_eapol_pdu.h

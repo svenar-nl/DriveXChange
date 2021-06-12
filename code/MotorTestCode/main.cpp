@@ -2,6 +2,7 @@
 #include "Motor.h"
 #include "Pixy2.h"
 #include "PwmOut.h"
+#include "ThisThread.h"
 #include "mbed.h"
 
 Pixy2 pixy;
@@ -14,7 +15,9 @@ uint8_t x0 = 0, y0 = 0, x1 = 0, y1 = 0;
 Motor motor_left(A6, D8, D9);
 Motor motor_right(D3, D6, D7);
 
-#define TOP_SPEED 1
+#define TOP_SPEED 40
+
+bool pixy_ready = false;
 
 // PwmOut test_a6(A6);
 // DigitalOut test_d4(D4);
@@ -27,6 +30,7 @@ Motor motor_right(D3, D6, D7);
 void setup();
 void loop();
 
+// Map a specific value to a different range
 long map(long x, long in_min, long in_max, long out_min, long out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
@@ -42,11 +46,18 @@ int main() {
 }
 
 void setup() {
+  ThisThread::sleep_for(3s);
+
   pixy.init();
   pixy.changeProg("line_tracking");
   pixy.getResolution();
   pixy.setLamp(1, 1);
   pixy.line.setMode(LINE_VECTOR);
+
+//   motor_left.speed(0.5);
+//   motor_right.speed(0.5);
+
+//   ThisThread::sleep_for(250ms);
 
   motor_left.speed(0.0);
   motor_right.speed(0.0);
@@ -92,7 +103,7 @@ void loop() {
 
   //   printf("(%d, %d)\n", x0, y0);
 
-  int used_x_variable = x1;
+  int used_x_variable = x0;
 
   int location_percentage = map(used_x_variable, 0, pixy.frameWidth, 0,
                                 100); // 0 = left 50 = center 100 = right
@@ -107,6 +118,22 @@ void loop() {
     } else {
       printf(" ");
     }
+  }
+
+  if (location_percentage > 0) {
+    pixy_ready = true;
+  } else {
+    pixy.init();
+    pixy.changeProg("line_tracking");
+    pixy.getResolution();
+    pixy.setLamp(0, 0);
+    pixy.line.setMode(LINE_VECTOR);
+
+    ThisThread::sleep_for(500ms);
+
+    pixy.setLamp(1, 1);
+
+    ThisThread::sleep_for(500ms);
   }
 
   int thresholdlow = 5;
@@ -182,14 +209,19 @@ void loop() {
     power_right = 0.0;
   }
 
-  power_left = power_left > TOP_SPEED ? TOP_SPEED : power_left;
-  power_right = power_right > TOP_SPEED ? TOP_SPEED : power_right;
+  //   power_left = power_left > TOP_SPEED ? TOP_SPEED : power_left;
+  //   power_right = power_right > TOP_SPEED ? TOP_SPEED : power_right;
 
-  motor_left.speed(power_left);
-  motor_right.speed(power_right);
+  power_left = map(power_left * 100.0, 0.0, 100.0, 0.0, TOP_SPEED) / 100.0;
+  power_right = map(power_right * 100.0, 0.0, 100.0, 0.0, TOP_SPEED) / 100.0;
 
-  printf("\t %d\t%d\t(%.2f, %.2f)", location_percentage, location_percentage,
-         power_left, power_right);
+  if (pixy_ready) {
+    motor_left.speed(power_left);
+    motor_right.speed(power_right);
+  }
+
+  printf("\t %d\t%d\t%d\t(%.2f, %.2f)", location_percentage, doDrive ? 1 : 0,
+         pixy_ready ? 1 : 0, power_left, power_right);
   printf("\n");
 
   ///////////////////////////////////////////////////////////

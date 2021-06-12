@@ -95,6 +95,5 @@ BUILD/NUCLEO_F303K8/ARMC6/mbed-os/platform/source/mbed_error.o: \
   mbed-os/drivers/include/drivers/MbedCRC.h \
   mbed-os/hal/include/hal/crc_api.h \
   mbed-os/targets/TARGET_STM/mbed_rtx.h \
-  mbed-os/cmsis/CMSIS_5/CMSIS/TARGET_CORTEX_M/Include/cmsis_compiler.h \
   mbed-os/cmsis/CMSIS_5/CMSIS/RTOS2/RTX/Include/rtx_os.h \
   mbed-os/cmsis/CMSIS_5/CMSIS/RTOS2/Include/cmsis_os2.h

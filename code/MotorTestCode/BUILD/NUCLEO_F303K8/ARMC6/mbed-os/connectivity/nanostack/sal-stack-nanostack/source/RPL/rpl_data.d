@@ -53,12 +53,4 @@ BUILD/NUCLEO_F303K8/ARMC6/mbed-os/connectivity/nanostack/sal-stack-nanostack/sou
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/RPL/rpl_downward.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/RPL/rpl_structures.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/RPL/rpl_policy.h \
-  mbed-os/connectivity/nanostack/sal-stack-nanostack/source/RPL/rpl_data.h \
-  mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/ws/ws_common.h \
-  mbed-os/connectivity/nanostack/sal-stack-nanostack/nanostack/fhss_api.h \
-  mbed-os/connectivity/nanostack/sal-stack-nanostack/nanostack/fhss_config.h \
-  mbed-os/connectivity/nanostack/sal-stack-nanostack/nanostack/fhss_ws_extension.h \
-  mbed-os/connectivity/nanostack/sal-stack-nanostack/nanostack/net_fhss.h \
-  mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/ws/ws_config.h \
-  mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/ws/ws_common_defines.h \
-  mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/ws/ws_neighbor_class.h
+  mbed-os/connectivity/nanostack/sal-stack-nanostack/source/RPL/rpl_data.h

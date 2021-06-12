@@ -61,4 +61,5 @@ BUILD/NUCLEO_F303K8/ARMC6/mbed-os/targets/TARGET_STM/TARGET_STM32F3/STM32Cube_FW
   mbed-os/targets/TARGET_STM/TARGET_STM32F3/STM32Cube_FW/STM32F3xx_HAL_Driver/stm32f3xx_hal_uart_ex.h \
   mbed-os/targets/TARGET_STM/TARGET_STM32F3/STM32Cube_FW/STM32F3xx_HAL_Driver/stm32f3xx_hal_usart.h \
   mbed-os/targets/TARGET_STM/TARGET_STM32F3/STM32Cube_FW/STM32F3xx_HAL_Driver/stm32f3xx_hal_usart_ex.h \
-  mbed-os/targets/TARGET_STM/TARGET_STM32F3/STM32Cube_FW/STM32F3xx_HAL_Driver/stm32f3xx_hal_wwdg.h
+  mbed-os/targets/TARGET_STM/TARGET_STM32F3/STM32Cube_FW/STM32F3xx_HAL_Driver/stm32f3xx_hal_wwdg.h \
+  mbed-os/targets/TARGET_STM/nvic_addr.h

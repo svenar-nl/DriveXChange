@@ -84,5 +84,4 @@ BUILD/NUCLEO_F303K8/ARMC6/mbed-os/targets/TARGET_STM/gpio_api.o: \
   mbed-os/platform/include/platform/mbed_error.h \
   mbed-os/platform/include/platform/mbed_retarget.h \
   mbed-os/targets/TARGET_STM/TARGET_STM32F3/pin_device.h \
-  mbed-os/targets/TARGET_STM/TARGET_STM32F3/STM32Cube_FW/STM32F3xx_HAL_Driver/stm32f3xx_ll_gpio.h \
-  mbed-os/targets/TARGET_STM/PeripheralPins.h
+  mbed-os/targets/TARGET_STM/TARGET_STM32F3/STM32Cube_FW/STM32F3xx_HAL_Driver/stm32f3xx_ll_gpio.h

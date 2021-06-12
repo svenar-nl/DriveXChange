@@ -41,8 +41,8 @@
 // percent ranging from 0% to 100%. When the left or right drive motor exedes
 // the maximum speed it will be limited to this value. And below the minimal
 // value , the motors will be stopped.
-#define ROBOT_MIN_SPEED_IN_PERCENT 20
-#define ROBOT_MAX_SPEED_IN_PERCENT 100
+#define ROBOT_MIN_SPEED_IN_PERCENT 30
+#define ROBOT_MAX_SPEED_IN_PERCENT 65
 
 // Should the Pixy2 camera use the x coorninate in the distance(true) or
 // closeby(false). By using closeby(false) the x0 location returned by the Pixy2
@@ -52,7 +52,7 @@
 // vector will be used, this is on the upper part of the camera, or further away
 // from robot. This will allow the robot to cut corners instead of following it
 // strictly.
-#define LINE_DETECTION_LOOK_AHEAD true
+#define LINE_DETECTION_LOOK_AHEAD false
 
 // When true print information over serial USB to the connected PC. Use a serial
 // terminal with a baudrate of 115200 to watch the output. Set this to false
@@ -75,7 +75,7 @@
 #define NUMBER_OF_MAGNETS_ON_WHEEL 1
 
 // Target distance to deliver the packet at
-#define PACKET_TARGET_DISTANCE_IN_MM 10 * 1000
+#define PACKET_TARGET_DISTANCE_IN_M 10
 
 // Rough PI
 #define PI 3.1415
@@ -177,8 +177,15 @@ void tone(uint16_t period, uint16_t delay) {
 /**
     @return true to end loop
 */
+int count1 = 0;
 bool hefmotor() {
   // programmeer hefmotor
+  if (count1 >= 10000) {
+      return true;
+  }
+  printf("%d\n", count1);
+  count1++;
+
   return false;
 }
 
@@ -186,9 +193,12 @@ void handle_packet_delivery() {
   if (has_delivered_package)
     return;
 
-  if (robot_distance_traveled >= PACKET_TARGET_DISTANCE_IN_MM) {
-    while (!hefmotor()) {
-    }
+  if (robot_distance_traveled >= PACKET_TARGET_DISTANCE_IN_M) {
+    motor_left.speed(0);
+    motor_right.speed(0);
+
+    while (!hefmotor())
+      ;
     has_delivered_package = true;
   }
 }
@@ -278,6 +288,21 @@ void setup() {
   printf("Running on Mbed OS %d.%d.%d.\n", MBED_MAJOR_VERSION,
          MBED_MINOR_VERSION, MBED_PATCH_VERSION);
   printf("\n");
+
+  //   motor_left.speed(1);
+  //   motor_right.speed(1);
+
+  //   ThisThread::sleep_for(1s);
+
+  //   motor_left.speed(-1);
+  //   motor_right.speed(-1);
+
+  //   ThisThread::sleep_for(100ms);
+
+  //   motor_left.speed(0);
+  //   motor_right.speed(0);
+
+  //   ThisThread::sleep_for(600s);
 }
 
 // Executed continously to let the robot function as it should. Like line
@@ -331,7 +356,8 @@ void loop() {
   }
 
   if (do_print_debug) {
-    printf("[traveled %.2fm] ", robot_distance_traveled);
+    printf("[%.2fm | %d] ", robot_distance_traveled,
+           has_delivered_package ? 1 : 0);
   }
 
   // ---------- //
@@ -395,15 +421,15 @@ void loop() {
     for (int i = 0; i < debug_line_position_width; i++) {
       if (i == 0 || i == debug_line_position_width - 1) {
         printf("|");
-      } else if (i == (int)(pixy2_line_vector_location_percentage *
-                            debug_line_position_width) /
-                          100) {
-        printf("^");
       } else if (debug_line_position_width % 2 == 0
                      ? (i == (int)(debug_line_position_width / 2) ||
                         i == (int)(debug_line_position_width / 2) - 1)
                      : (i == (int)(debug_line_position_width / 2))) {
         printf("|");
+      } else if (i == (int)(pixy2_line_vector_location_percentage *
+                            debug_line_position_width) /
+                          100) {
+        printf("^");
       } else {
         printf(" ");
       }
@@ -432,7 +458,9 @@ void loop() {
     motor_right_power = 1.0;
   }
 
-  uint8_t aa = (50 - abs(pixy2_line_vector_location_percentage - 50)) * 2;
+  uint8_t aa =
+      constrain((50 - abs(pixy2_line_vector_location_percentage - 50)) * 2,
+                ROBOT_MIN_SPEED_IN_PERCENT, 100);
 
   if (do_print_debug) {
     printf(" <%d> ", aa);
@@ -501,12 +529,20 @@ void loop() {
 
   // Limit the drive motors maximum speed. This works with a single line if else
   // statement in the format: (variable = condition ? true : false).
-  motor_left_power = motor_left_power > ROBOT_MAX_SPEED_IN_PERCENT / 100.0
-                         ? ROBOT_MAX_SPEED_IN_PERCENT / 100.0
-                         : motor_left_power;
-  motor_right_power = motor_right_power > ROBOT_MAX_SPEED_IN_PERCENT / 100.0
-                          ? ROBOT_MAX_SPEED_IN_PERCENT / 100.0
-                          : motor_right_power;
+  //   motor_left_power = motor_left_power > ROBOT_MAX_SPEED_IN_PERCENT / 100.0
+  //                          ? ROBOT_MAX_SPEED_IN_PERCENT / 100.0
+  //                          : motor_left_power;
+  //   motor_right_power = motor_right_power > ROBOT_MAX_SPEED_IN_PERCENT /
+  //   100.0
+  //                           ? ROBOT_MAX_SPEED_IN_PERCENT / 100.0
+  //                           : motor_right_power;
+
+  motor_left_power = map(motor_left_power * 100.0f, 0.0, 100.0, 0.0,
+                         ROBOT_MAX_SPEED_IN_PERCENT) /
+                     100.0f;
+  motor_right_power = map(motor_right_power * 100.0f, 0.0, 100.0, 0.0,
+                          ROBOT_MAX_SPEED_IN_PERCENT) /
+                      100.0f;
 
   // Limit the drive motors minimal speed. This works with a single line if else
   // statement in the format: (variable = condition ? true : false).

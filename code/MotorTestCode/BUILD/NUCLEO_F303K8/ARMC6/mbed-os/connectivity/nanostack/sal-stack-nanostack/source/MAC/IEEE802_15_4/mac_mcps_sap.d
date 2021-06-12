@@ -37,7 +37,6 @@ BUILD/NUCLEO_F303K8/ARMC6/mbed-os/connectivity/nanostack/sal-stack-nanostack/sou
   mbed-os/connectivity/libraries/nanostack-libservice/mbed-client-libservice/platform/arm_hal_interrupt.h \
   mbed-os/connectivity/libraries/nanostack-libservice/mbed-client-libservice/common_functions.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/Core/include/ns_monitor.h \
-  mbed-os/platform/randlib/include/mbed-client-randlib/randLIB.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/MAC/IEEE802_15_4/sw_mac_internal.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/MAC/IEEE802_15_4/mac_defines.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/MAC/IEEE802_15_4/mac_data_buffer.h \

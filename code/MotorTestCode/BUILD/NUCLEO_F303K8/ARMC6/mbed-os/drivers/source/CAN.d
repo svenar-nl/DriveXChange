@@ -83,7 +83,7 @@ BUILD/NUCLEO_F303K8/ARMC6/mbed-os/drivers/source/CAN.o: \
   mbed-os/targets/TARGET_STM/TARGET_STM32F3/STM32Cube_FW/STM32F3xx_HAL_Driver/stm32f3xx_ll_rtc.h \
   mbed-os/targets/TARGET_STM/TARGET_STM32F3/STM32Cube_FW/STM32F3xx_HAL_Driver/stm32f3xx_ll_rcc.h \
   mbed-os/hal/include/hal/PinNameAliases.h \
-  mbed-os/drivers/include/drivers/interfaces/InterfaceCAN.h \
+  mbed-os/hal/include/hal/can_api.h mbed-os/hal/include/hal/pinmap.h \
   mbed-os/hal/include/hal/can_helper.h \
   mbed-os/platform/include/platform/Callback.h \
   mbed-os/platform/cxxsupport/mstd_cstddef \
@@ -93,7 +93,6 @@ BUILD/NUCLEO_F303K8/ARMC6/mbed-os/drivers/source/CAN.o: \
   mbed-os/platform/cxxsupport/mstd_memory \
   mbed-os/platform/cxxsupport/mstd_utility \
   mbed-os/platform/cxxsupport/mstd_iterator \
-  mbed-os/hal/include/hal/can_api.h mbed-os/hal/include/hal/pinmap.h \
   mbed-os/platform/include/platform/PlatformMutex.h \
   mbed-os/platform/include/platform/NonCopyable.h \
   mbed-os/rtos/include/rtos/Mutex.h \

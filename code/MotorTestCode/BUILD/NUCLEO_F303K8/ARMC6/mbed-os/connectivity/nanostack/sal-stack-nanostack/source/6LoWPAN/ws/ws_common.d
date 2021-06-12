@@ -29,7 +29,6 @@ BUILD/NUCLEO_F303K8/ARMC6/mbed-os/connectivity/nanostack/sal-stack-nanostack/sou
   mbed-os/connectivity/nanostack/sal-stack-nanostack/nanostack/net_interface.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/nanostack/platform/arm_hal_phy.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/MAC/mpx_api.h \
-  mbed-os/connectivity/nanostack/sal-stack-nanostack/nanostack/mac_mcps.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/ws/ws_config.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/ws/ws_common_defines.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/ws/ws_llc.h \
@@ -57,11 +56,11 @@ BUILD/NUCLEO_F303K8/ARMC6/mbed-os/connectivity/nanostack/sal-stack-nanostack/sou
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/ws/ws_bbr_api_internal.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/ws/ws_pae_controller.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/ws/ws_cfg_settings.h \
-  mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/ws/ws_stats.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/Service_Libs/etx/etx.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/Service_Libs/blacklist/blacklist.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/RPL/rpl_protocol.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/nanostack/net_rpl.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/RPL/rpl_control.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/nanostack/ws_management_api.h \
-  mbed-os/connectivity/nanostack/sal-stack-nanostack/nanostack/mac_api.h
+  mbed-os/connectivity/nanostack/sal-stack-nanostack/nanostack/mac_api.h \
+  mbed-os/connectivity/nanostack/sal-stack-nanostack/nanostack/mac_mcps.h
