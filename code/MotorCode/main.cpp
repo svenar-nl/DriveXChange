@@ -2,12 +2,26 @@
 //            INCLUDES            //
 // ------------------------------ //
 
+#define DISTANCE_SENSOR_TOF
+// #define DISTANCE_SENSOR_ULTRASONIC
+
 #include "Motor.h"
 #include "Pixy2.h"
 #include "ThisThread.h"
-#include "VL53L1X.h"
 #include "mbed.h"
 #include <cstdint>
+
+#if !defined(DISTANCE_SENSOR_TOF) && !defined(DISTANCE_SENSOR_ULTRASONIC)
+#error "No distance sensor has been defined!"
+#endif
+
+#ifdef DISTANCE_SENSOR_TOF
+#include "VL53L1X.h"
+#endif
+
+#ifdef DISTANCE_SENSOR_ULTRASONIC
+#include "ultrasonic.h"
+#endif
 
 // ------------------------------ //
 //           DEFINITIONS          //
@@ -83,7 +97,9 @@
 
 // Distance tracking sensor to measure the distance in front of the robot, uses
 // the I2C protocol
+#ifdef DISTANCE_SENSOR_TOF
 VL53L1X distance_sensor(I2C_SDA, I2C_SCL); // SDA(D4) SCL(D5)
+#endif
 
 // The line tracking camera (Pixy2). Uses the SPI protocol (MOSI, MISO, SCK) for
 // communication. MOSI(D11) MISO(D12) SCK(D13)
@@ -146,6 +162,14 @@ bool has_delivered_package = false;
 //            FUNCTIONS           //
 // ------------------------------ //
 
+#ifdef DISTANCE_SENSOR_ULTRASONIC
+
+// Use same pins as the ToF distance sensor for ease of use
+// I2C_SDA = ECHO
+// I2C_SCL = TRIG
+Sonar distance_sensor(I2C_SDA, I2C_SCL);
+#endif
+
 // Dummy functions to be populated below, needed here because it needs to be
 // defined before 'int main() {'
 
@@ -175,17 +199,23 @@ void tone(uint16_t period, uint16_t delay) {
     @return true to end loop
 */
 bool hefmotor() {
-    //programmeer hefmotor
-    return false;
+  // programmeer hefmotor
+  return false;
 }
 
 void handle_packet_delivery() {
-    if (has_delivered_package) return;
+  if (has_delivered_package)
+    return;
 
-    if (robot_distance_traveled >= PACKET_TARGET_DISTANCE_IN_MM) {
-        while (!hefmotor());
-        has_delivered_package = true;
-    }
+  if (robot_distance_traveled >= PACKET_TARGET_DISTANCE_IN_MM) {
+    motor_left.speed(0);
+    motor_right.speed(0);
+
+    while (!hefmotor())
+      ;
+
+    has_delivered_package = true;
+  }
 }
 
 // Executed when the microcontroller started, needs to have a while loop that
@@ -251,12 +281,22 @@ void setup() {
   //  VL53L1X   //
   // ---------- //
 
+#ifdef DISTANCE_SENSOR_TOF
   // Initialize the VL53L1X time-of-flight sensor and wake it up. Initializes
   // the I2C communication to the sensor as well.
   distance_sensor.begin();
 
   // Set the sense modus. 2: Long range
   distance_sensor.setDistanceMode(2);
+#endif
+
+  // ---------- //
+  // ULTRASONIC //
+  // ---------- //
+
+#ifdef DISTANCE_SENSOR_ULTRASONIC
+  distance_sensor.start();
+#endif
 
   // ---------- //
   //   MOTORS   //
@@ -307,9 +347,11 @@ void loop() {
 
   if (!halleffect) {
     if (!halleffect_pulse_detected) {
-      robot_distance_traveled += (float)((float)WHEEL_DIAMETER * PI) / (float)NUMBER_OF_MAGNETS_ON_WHEEL;
+      robot_distance_traveled += (float)((float)WHEEL_DIAMETER * PI) /
+                                 (float)NUMBER_OF_MAGNETS_ON_WHEEL;
 
-      // Deze toggle functie zorgt dat dit gedeelte van de functie niet meerdere keren per rondslag afstand optelt.
+      // Deze toggle functie zorgt dat dit gedeelte van de functie niet meerdere
+      // keren per rondslag afstand optelt.
       halleffect_pulse_detected = true;
     }
   } else {
@@ -422,6 +464,7 @@ void loop() {
   //  VL53L1X   //
   // ---------- //
 
+#ifdef DISTANCE_SENSOR_TOF
   // Update the distance_measured_in_mm variable every
   // DISTANCE_SENSOR_UPDATE_INTERVAL_IN_MS milliseconds since microcontroller
   // startup. This is a non-block proces that uses the Mbed Timer module to
@@ -445,6 +488,22 @@ void loop() {
       distance_sensor.startMeasurement();
     }
   }
+
+#endif
+
+  // ---------- //
+  // ULTRASONIC //
+  // ---------- //
+
+#ifdef DISTANCE_SENSOR_ULTRASONIC
+  if (current_ms - distance_sensor_read_last_milliseconds >
+      DISTANCE_SENSOR_UPDATE_INTERVAL_IN_MS) {
+    // Update the last milliseconds to the current milliseconds
+    distance_sensor_read_last_milliseconds = current_ms;
+    distance_measured_in_mm =
+        distance_sensor.read() + DISTANCE_SENSOR_OFFSET_IN_MM;
+  }
+#endif
 
   // Is the distance in front of the robot smaller than the predefined target
   // distance. Stop the motors.
