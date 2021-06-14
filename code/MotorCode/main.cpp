@@ -237,7 +237,7 @@ void handle_packet_delivery() {
 
 
 // Begin timer to compare with current_ms
-    uint32_t start_time_hef = chrono::duration_cast<chrono::milliseconds>(main_timer.elapsed_time())
+    start_time_hef = chrono::duration_cast<chrono::milliseconds>(main_timer.elapsed_time())
           .count();
     while (!hefmotor());
 
