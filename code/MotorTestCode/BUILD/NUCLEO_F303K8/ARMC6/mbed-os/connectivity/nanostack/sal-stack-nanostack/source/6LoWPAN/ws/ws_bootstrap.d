@@ -31,7 +31,6 @@ BUILD/NUCLEO_F303K8/ARMC6/mbed-os/connectivity/nanostack/sal-stack-nanostack/sou
   mbed-os/connectivity/nanostack/sal-stack-nanostack/nanostack/sw_mac.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/nanostack/ccmLIB.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/nanostack/platform/arm_hal_aes.h \
-  mbed-os/connectivity/nanostack/sal-stack-nanostack/source/Core/include/ns_monitor.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/NWK_INTERFACE/Include/protocol.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/NWK_INTERFACE/Include/protocol_abstract.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/Core/include/ns_address_internal.h \
@@ -52,7 +51,6 @@ BUILD/NUCLEO_F303K8/ARMC6/mbed-os/connectivity/nanostack/sal-stack-nanostack/sou
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/MAC/mac_helper.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/MAC/mac_data_poll.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/MAC/mpx_api.h \
-  mbed-os/connectivity/nanostack/sal-stack-nanostack/nanostack/mac_mcps.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/MAC/mac_ie_lib.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/MPL/mpl.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/RPL/rpl_protocol.h \
@@ -91,6 +89,7 @@ BUILD/NUCLEO_F303K8/ARMC6/mbed-os/connectivity/nanostack/sal-stack-nanostack/sou
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/DHCPv6_client/dhcpv6_client_api.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/nanostack/ws_management_api.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/nanostack/mac_api.h \
+  mbed-os/connectivity/nanostack/sal-stack-nanostack/nanostack/mac_mcps.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/ws/ws_pae_controller.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/ws/ws_eapol_pdu.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/ws/ws_eapol_auth_relay.h \

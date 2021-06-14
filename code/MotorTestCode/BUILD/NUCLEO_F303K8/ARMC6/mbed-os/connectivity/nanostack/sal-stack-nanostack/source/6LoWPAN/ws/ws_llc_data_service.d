@@ -61,5 +61,4 @@ BUILD/NUCLEO_F303K8/ARMC6/mbed-os/connectivity/nanostack/sal-stack-nanostack/sou
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/ws/ws_cfg_settings.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/Security/PANA/pana_eap_header.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/Security/eapol/eapol_helper.h \
-  mbed-os/connectivity/nanostack/sal-stack-nanostack/source/Service_Libs/etx/etx.h \
-  mbed-os/connectivity/nanostack/sal-stack-nanostack/source/Service_Libs/random_early_detection/random_early_detection_api.h
+  mbed-os/connectivity/nanostack/sal-stack-nanostack/source/Service_Libs/etx/etx.h

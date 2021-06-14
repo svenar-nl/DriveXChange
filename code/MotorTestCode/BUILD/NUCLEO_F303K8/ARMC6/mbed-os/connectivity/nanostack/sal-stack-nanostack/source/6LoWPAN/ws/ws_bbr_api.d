@@ -63,18 +63,15 @@ BUILD/NUCLEO_F303K8/ARMC6/mbed-os/connectivity/nanostack/sal-stack-nanostack/sou
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/Common_Protocols/icmpv6.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/Common_Protocols/icmpv6_prefix.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/Common_Protocols/icmpv6_radv.h \
-  mbed-os/connectivity/nanostack/sal-stack-nanostack/source/Common_Protocols/ip.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/nanostack/ws_management_api.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/nanostack/net_rpl.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/Service_Libs/nd_proxy/nd_proxy.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/ws/ws_bbr_api_internal.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/ws/ws_pae_controller.h \
-  mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/lowpan_adaptation_interface.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/DHCPv6_Server/DHCPv6_server_service.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/libDHCPv6/libDHCPv6.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/libDHCPv6/libDHCPv6_server.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/DHCPv6_client/dhcpv6_client_api.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/libDHCPv6/libDHCPv6_vendordata.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/libNET/src/net_dns_internal.h \
-  mbed-os/connectivity/nanostack/sal-stack-nanostack/nanostack/platform/os_whiteboard.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/nanostack/ws_bbr_api.h

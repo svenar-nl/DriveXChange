@@ -100,7 +100,6 @@ BUILD/NUCLEO_F303K8/ARMC6/mbed-os/connectivity/nanostack/sal-stack-nanostack/sou
   mbed-os/connectivity/nanostack/sal-stack-nanostack/nanostack/sw_mac.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/MAC/mac_data_poll.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/MAC/mpx_api.h \
-  mbed-os/connectivity/nanostack/sal-stack-nanostack/nanostack/mac_mcps.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/lowpan_adaptation_interface.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/6LoWPAN/Fragmentation/cipv6_fragmenter.h \
   mbed-os/connectivity/nanostack/sal-stack-nanostack/source/Service_Libs/etx/etx.h \
