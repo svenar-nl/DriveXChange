@@ -2,8 +2,8 @@
 //            INCLUDES            //
 // ------------------------------ //
 
-#define DISTANCE_SENSOR_TOF
-// #define DISTANCE_SENSOR_ULTRASONIC
+// #define DISTANCE_SENSOR_TOF
+#define DISTANCE_SENSOR_ULTRASONIC
 
 #include "Motor.h"
 #include "Pixy2.h"
@@ -91,6 +91,7 @@
 // Rough PI
 #define PI 3.1415
 
+
 // ------------------------------ //
 //             OBJECTS            //
 // ------------------------------ //
@@ -111,8 +112,13 @@ Motor motor_left(A6, D8, D9);
 // Motor on the right side of the motor (PWM FWD BCK)
 Motor motor_right(D3, D6, D7);
 
+// Hefmotor
+Motor hef_motor(A3, A0,A1);
+
 // Set-up a default timer that runs since the robot has initialized
 Timer main_timer;
+
+
 
 // Hall-effect sensor to measure the rotations of then weel
 DigitalIn halleffect(D2, PullDown);
@@ -146,6 +152,12 @@ int16_t pixy2_line_vector_location_percentage = 0;
 // stored in this variable in an unsigned 32 bit number. Time stored here is in
 // milliseconds and corresponds with DEBUG_PRINT_INTERVAL.
 uint32_t last_debug_message_time = 0;
+
+
+// 
+// 
+// 
+uint32_t start_time_hef = 0;
 
 // How far has the robot traveled in meters? Calculated using the halleffect
 // sensor on one of the robots wheels
@@ -200,7 +212,19 @@ void tone(uint16_t period, uint16_t delay) {
 */
 bool hefmotor() {
   // programmeer hefmotor
-  return false;
+    // Begin time for Hef 
+    uint32_t current_ms_hef = chrono::duration_cast<chrono::milliseconds>(main_timer.elapsed_time())
+          .count();
+    
+    uint32_t delta_time = current_ms_hef - start_time_hef;
+    
+    if(delta_time <= 10000) {
+        hef_motor.speed(100);
+        return false;
+    } else{
+        return true;
+    }
+    
 }
 
 void handle_packet_delivery() {
@@ -211,8 +235,11 @@ void handle_packet_delivery() {
     motor_left.speed(0);
     motor_right.speed(0);
 
-    while (!hefmotor())
-      ;
+
+// Begin timer to compare with current_ms
+    uint32_t start_time_hef = chrono::duration_cast<chrono::milliseconds>(main_timer.elapsed_time())
+          .count();
+    while (!hefmotor());
 
     has_delivered_package = true;
   }
