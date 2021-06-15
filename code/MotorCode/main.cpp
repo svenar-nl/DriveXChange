@@ -96,10 +96,17 @@
 //             OBJECTS            //
 // ------------------------------ //
 
+#ifdef DISTANCE_SENSOR_TOF
 // Distance tracking sensor to measure the distance in front of the robot, uses
 // the I2C protocol
-#ifdef DISTANCE_SENSOR_TOF
 VL53L1X distance_sensor(I2C_SDA, I2C_SCL); // SDA(D4) SCL(D5)
+#endif
+
+#ifdef DISTANCE_SENSOR_ULTRASONIC
+// Use same pins as the ToF distance sensor for ease of use
+// I2C_SCL = TRIG
+// I2C_SDA = ECHO
+ULTRASONIC distance_sensor(I2C_SCL, I2C_SDA);
 #endif
 
 // The line tracking camera (Pixy2). Uses the SPI protocol (MOSI, MISO, SCK) for
@@ -135,7 +142,7 @@ uint32_t distance_sensor_read_last_milliseconds = 0;
 // The last measured distance is stored in this variable. Measured distance is
 // in millimeters. This variable is updated with an interval of
 // DISTANCE_SENSOR_UPDATE_INTERVAL_IN_MS milliseconds in the loop() function.
-int16_t distance_measured_in_mm = 0;
+uint32_t distance_measured_in_mm = 0;
 
 // This is the raw location of the line as detected by the Pixy2 camera.
 // Depending of LINE_DETECTION_LOOK_AHEAD this can either be x0 or x1 from the
@@ -173,14 +180,6 @@ bool has_delivered_package = false;
 // ------------------------------ //
 //            FUNCTIONS           //
 // ------------------------------ //
-
-#ifdef DISTANCE_SENSOR_ULTRASONIC
-
-// Use same pins as the ToF distance sensor for ease of use
-// I2C_SDA = ECHO
-// I2C_SCL = TRIG
-Sonar distance_sensor(I2C_SDA, I2C_SCL);
-#endif
 
 // Dummy functions to be populated below, needed here because it needs to be
 // defined before 'int main() {'
@@ -271,10 +270,12 @@ void setup() {
   //  GENERAL   //
   // ---------- //
 
-  // Wait a second before running the set-up code to make sure the Pixy2
+  printf("Starting...\n");
+
+  // Wait a few seconds before running the set-up code to make sure the Pixy2
   // camera module has started and can be initialized. This prevents unnecessary
   // timing issues between different microcontrollers (STM32 <=SPI=> Pixy2)
-  ThisThread::sleep_for(1000ms);
+  ThisThread::sleep_for(2000ms);
 
   // Start the main timer to run as long as the robot is online.
   main_timer.start();
@@ -322,6 +323,7 @@ void setup() {
   // ---------- //
 
 #ifdef DISTANCE_SENSOR_ULTRASONIC
+  distance_sensor.set_measure_speed(100);
   distance_sensor.start();
 #endif
 
@@ -395,6 +397,8 @@ void loop() {
   // ---------- //
 
   handle_packet_delivery();
+
+//   printf("b");
 
   // ---------- //
   //   PIXY2    //
@@ -523,22 +527,24 @@ void loop() {
   // ---------- //
 
 #ifdef DISTANCE_SENSOR_ULTRASONIC
+  //   distance_sensor.update();
+
   if (current_ms - distance_sensor_read_last_milliseconds >
       DISTANCE_SENSOR_UPDATE_INTERVAL_IN_MS) {
     // Update the last milliseconds to the current milliseconds
     distance_sensor_read_last_milliseconds = current_ms;
     distance_measured_in_mm =
-        distance_sensor.read() + DISTANCE_SENSOR_OFFSET_IN_MM;
+        distance_sensor.get_distance() + DISTANCE_SENSOR_OFFSET_IN_MM;
   }
 #endif
 
   // Is the distance in front of the robot smaller than the predefined target
   // distance. Stop the motors.
   if (distance_measured_in_mm < STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM) {
-
     tone(1500, 100);
     tone(1300, 100);
     tone(1100, 100);
+
     motor_left_power = 0;
     motor_right_power = 0;
     // return;
