@@ -125,6 +125,8 @@ Motor hef_motor(A3, A0,A1);
 // Set-up a default timer that runs since the robot has initialized
 Timer main_timer;
 
+
+
 // Hall-effect sensor to measure the rotations of then weel
 DigitalIn halleffect(D2, PullDown);
 
