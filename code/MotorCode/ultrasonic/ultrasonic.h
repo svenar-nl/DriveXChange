@@ -17,6 +17,8 @@ public:
 private:
   int measure_interval;
   int distance_measured;
+  int last_distance_measured;
+  int zero_count;
   int max_distance;
 
   uint32_t begin_time;

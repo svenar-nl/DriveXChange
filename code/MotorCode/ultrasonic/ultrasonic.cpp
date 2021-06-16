@@ -42,9 +42,21 @@ void ULTRASONIC::update(void) {
             distance_measured = (float)(current_time - begin_time) * 10.0 / 58.0;
             distance_measured = constrain(distance_measured, 0, max_distance);
             
-            if (distance_measured == max_distance) {
-                distance_measured = 0;
-            }
+            // if (distance_measured == max_distance) {
+            //     distance_measured = 0;
+            // }
+
+            // if (distance_measured == 0) {
+            //     zero_count++;
+            // } else {
+            //     zero_count = 0;
+            // }
+
+            // last_distance_measured = distance_measured;
+
+            // if (distance_measured == 0 && last_distance_measured > 3000) {
+            //     distance_measured = last_distance_measured;
+            // }
             // distance_measured = current_time - begin_time;
             is_measuring = false;
         }
