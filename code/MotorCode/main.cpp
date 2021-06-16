@@ -2,8 +2,8 @@
 //            INCLUDES            //
 // ------------------------------ //
 
-#define DISTANCE_SENSOR_TOF
-// #define DISTANCE_SENSOR_ULTRASONIC
+// #define DISTANCE_SENSOR_TOF
+#define DISTANCE_SENSOR_ULTRASONIC
 
 #include "Motor.h"
 #include "Pixy2.h"
@@ -91,14 +91,22 @@
 // Rough PI
 #define PI 3.1415
 
+
 // ------------------------------ //
 //             OBJECTS            //
 // ------------------------------ //
 
+#ifdef DISTANCE_SENSOR_TOF
 // Distance tracking sensor to measure the distance in front of the robot, uses
 // the I2C protocol
-#ifdef DISTANCE_SENSOR_TOF
 VL53L1X distance_sensor(I2C_SDA, I2C_SCL); // SDA(D4) SCL(D5)
+#endif
+
+#ifdef DISTANCE_SENSOR_ULTRASONIC
+// Use same pins as the ToF distance sensor for ease of use
+// I2C_SCL = TRIG
+// I2C_SDA = ECHO
+ULTRASONIC distance_sensor(I2C_SCL, I2C_SDA);
 #endif
 
 // The line tracking camera (Pixy2). Uses the SPI protocol (MOSI, MISO, SCK) for
@@ -111,11 +119,18 @@ Motor motor_left(A6, D8, D9);
 // Motor on the right side of the motor (PWM FWD BCK)
 Motor motor_right(D3, D6, D7);
 
+// Hefmotor
+Motor hef_motor(A3, A0,A1);
+
 // Set-up a default timer that runs since the robot has initialized
 Timer main_timer;
 
 // Hall-effect sensor to measure the rotations of then weel
 DigitalIn halleffect(D2, PullDown);
+
+// Low = off
+// High = on
+DigitalIn start_button(A2, PullDown);
 
 // ------------------------------ //
 //            VARIABLES           //
@@ -129,7 +144,7 @@ uint32_t distance_sensor_read_last_milliseconds = 0;
 // The last measured distance is stored in this variable. Measured distance is
 // in millimeters. This variable is updated with an interval of
 // DISTANCE_SENSOR_UPDATE_INTERVAL_IN_MS milliseconds in the loop() function.
-int16_t distance_measured_in_mm = 0;
+uint32_t distance_measured_in_mm = 0;
 
 // This is the raw location of the line as detected by the Pixy2 camera.
 // Depending of LINE_DETECTION_LOOK_AHEAD this can either be x0 or x1 from the
@@ -147,6 +162,12 @@ int16_t pixy2_line_vector_location_percentage = 0;
 // milliseconds and corresponds with DEBUG_PRINT_INTERVAL.
 uint32_t last_debug_message_time = 0;
 
+
+// 
+// 
+// 
+uint32_t start_time_hef = 0;
+
 // How far has the robot traveled in meters? Calculated using the halleffect
 // sensor on one of the robots wheels
 float robot_distance_traveled = 0;
@@ -158,17 +179,12 @@ bool halleffect_pulse_detected = false;
 // True if the package has been delivered and the robot can drive to the end
 bool has_delivered_package = false;
 
+uint32_t last_not_started_millis = 0;
+uint8_t last_not_started_toggle = 0;
+
 // ------------------------------ //
 //            FUNCTIONS           //
 // ------------------------------ //
-
-#ifdef DISTANCE_SENSOR_ULTRASONIC
-
-// Use same pins as the ToF distance sensor for ease of use
-// I2C_SDA = ECHO
-// I2C_SCL = TRIG
-Sonar distance_sensor(I2C_SDA, I2C_SCL);
-#endif
 
 // Dummy functions to be populated below, needed here because it needs to be
 // defined before 'int main() {'
@@ -200,7 +216,19 @@ void tone(uint16_t period, uint16_t delay) {
 */
 bool hefmotor() {
   // programmeer hefmotor
-  return false;
+    // Begin time for Hef 
+    uint32_t current_ms_hef = chrono::duration_cast<chrono::milliseconds>(main_timer.elapsed_time())
+          .count();
+    
+    uint32_t delta_time = current_ms_hef - start_time_hef;
+    
+    if(delta_time <= 10000) {
+        hef_motor.speed(100);
+        return false;
+    } else{
+        return true;
+    }
+    
 }
 
 void handle_packet_delivery() {
@@ -211,8 +239,11 @@ void handle_packet_delivery() {
     motor_left.speed(0);
     motor_right.speed(0);
 
-    while (!hefmotor())
-      ;
+
+// Begin timer to compare with current_ms
+    start_time_hef = chrono::duration_cast<chrono::milliseconds>(main_timer.elapsed_time())
+          .count();
+    while (!hefmotor());
 
     has_delivered_package = true;
   }
@@ -228,7 +259,20 @@ int main() {
   setup();
 
   while (true) {
-    loop();
+    if (start_button) {
+        loop();
+    } else {
+
+        uint32_t current_ms = chrono::duration_cast<chrono::milliseconds>(main_timer.elapsed_time()).count();
+        if (current_ms - last_not_started_millis > 250) {
+            last_not_started_millis = current_ms;
+            last_not_started_toggle = last_not_started_toggle == 0 ? 1 : 0;
+            pixy_camera.setLamp(last_not_started_toggle, last_not_started_toggle);
+        }
+
+        motor_left.speed(0);
+        motor_right.speed(0);
+    }
   }
 }
 
@@ -244,10 +288,12 @@ void setup() {
   //  GENERAL   //
   // ---------- //
 
-  // Wait a second before running the set-up code to make sure the Pixy2
+  printf("Starting...\n");
+
+  // Wait a few seconds before running the set-up code to make sure the Pixy2
   // camera module has started and can be initialized. This prevents unnecessary
   // timing issues between different microcontrollers (STM32 <=SPI=> Pixy2)
-  ThisThread::sleep_for(1000ms);
+  ThisThread::sleep_for(2000ms);
 
   // Start the main timer to run as long as the robot is online.
   main_timer.start();
@@ -295,6 +341,7 @@ void setup() {
   // ---------- //
 
 #ifdef DISTANCE_SENSOR_ULTRASONIC
+  distance_sensor.set_measure_speed(100);
   distance_sensor.start();
 #endif
 
@@ -368,6 +415,8 @@ void loop() {
   // ---------- //
 
   handle_packet_delivery();
+
+//   printf("b");
 
   // ---------- //
   //   PIXY2    //
@@ -444,7 +493,7 @@ void loop() {
   int thresholdlow = 5;
   if (pixy2_line_vector_location_percentage < 50 - thresholdlow) {
     motor_left_power =
-        map(pixy2_line_vector_location_percentage, 0, 50, 0, 100) / 100.0;
+        map(pixy2_line_vector_location_percentage, 50, 0, 0, 100) / 100.0;
     motor_left_power = 0;
   } else {
     motor_left_power = 1.0;
@@ -452,7 +501,7 @@ void loop() {
 
   if (pixy2_line_vector_location_percentage > 50 + thresholdlow) {
     motor_right_power =
-        map(pixy2_line_vector_location_percentage, 100, 50, 0, 100) / 100.0;
+        map(pixy2_line_vector_location_percentage, 50, 100, 0, 100) / 100.0;
     motor_right_power = 0;
   } else {
     motor_right_power = 1.0;
@@ -496,22 +545,24 @@ void loop() {
   // ---------- //
 
 #ifdef DISTANCE_SENSOR_ULTRASONIC
+  //   distance_sensor.update();
+
   if (current_ms - distance_sensor_read_last_milliseconds >
       DISTANCE_SENSOR_UPDATE_INTERVAL_IN_MS) {
     // Update the last milliseconds to the current milliseconds
     distance_sensor_read_last_milliseconds = current_ms;
     distance_measured_in_mm =
-        distance_sensor.read() + DISTANCE_SENSOR_OFFSET_IN_MM;
+        distance_sensor.get_distance() + DISTANCE_SENSOR_OFFSET_IN_MM;
   }
 #endif
 
   // Is the distance in front of the robot smaller than the predefined target
   // distance. Stop the motors.
   if (distance_measured_in_mm < STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM) {
-
     tone(1500, 100);
     tone(1300, 100);
     tone(1100, 100);
+
     motor_left_power = 0;
     motor_right_power = 0;
     // return;
