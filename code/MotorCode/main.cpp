@@ -3,6 +3,7 @@
 // ------------------------------ //
 
 // #define DISTANCE_SENSOR_TOF
+#include <chrono>
 #define DISTANCE_SENSOR_ULTRASONIC
 
 #include "Motor.h"
@@ -91,7 +92,6 @@
 // Rough PI
 #define PI 3.1415
 
-
 // ------------------------------ //
 //             OBJECTS            //
 // ------------------------------ //
@@ -120,12 +120,10 @@ Motor motor_left(A6, D8, D9);
 Motor motor_right(D3, D6, D7);
 
 // Hefmotor
-Motor hef_motor(A3, A0,A1);
+Motor hef_motor(A3, A0, A1);
 
 // Set-up a default timer that runs since the robot has initialized
 Timer main_timer;
-
-
 
 // Hall-effect sensor to measure the rotations of then weel
 DigitalIn halleffect(D2, PullDown);
@@ -164,10 +162,9 @@ int16_t pixy2_line_vector_location_percentage = 0;
 // milliseconds and corresponds with DEBUG_PRINT_INTERVAL.
 uint32_t last_debug_message_time = 0;
 
-
-// 
-// 
-// 
+//
+//
+//
 uint32_t start_time_hef = 0;
 
 // How far has the robot traveled in meters? Calculated using the halleffect
@@ -184,6 +181,17 @@ bool has_delivered_package = false;
 uint32_t last_not_started_millis = 0;
 uint8_t last_not_started_toggle = 0;
 
+enum HEF_STATE {
+  READY = 0,
+  MOVE_UP = 1,
+  WAIT_UP = 2,
+  MOVE_DOWN = 3,
+  WAIT_DOWN = 4,
+  DONE = 5
+};
+
+HEF_STATE current_hef_state = READY;
+
 // ------------------------------ //
 //            FUNCTIONS           //
 // ------------------------------ //
@@ -196,7 +204,14 @@ void setup();
 // loop is executed continuesly after setup has finished
 void loop();
 
+// Map a specific value to a different range
+long map(long x, long in_min, long in_max, long out_min, long out_max) {
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
 // Play tones on the motors
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 void tone(uint16_t period, uint16_t delay) {
   uint16_t note = 2200 - period;
   if (period > 0) {
@@ -207,30 +222,91 @@ void tone(uint16_t period, uint16_t delay) {
   }
 
   ThisThread::sleep_for(delay);
+  //   ThisThread::sleep_for(chrono::duration<chrono::milliseconds>(delay).count());
   motor_left.period(0.001);
   motor_right.period(0.001);
   motor_left.speed(0.0f);
   motor_right.speed(0.0f);
 }
+#pragma GCC diagnostic pop
 
 /**
     @return true to end loop
 */
 bool hefmotor() {
   // programmeer hefmotor
-    // Begin time for Hef 
-    uint32_t current_ms_hef = chrono::duration_cast<chrono::milliseconds>(main_timer.elapsed_time())
+  // Begin time for Hef
+  uint32_t current_ms_hef =
+      chrono::duration_cast<chrono::milliseconds>(main_timer.elapsed_time())
           .count();
-    
-    uint32_t delta_time = current_ms_hef - start_time_hef;
-    
-    if(delta_time <= 10000) {
-        hef_motor.speed(100);
-        return false;
-    } else{
-        return true;
+
+  uint32_t delta_time = current_ms_hef - start_time_hef;
+
+  switch (current_hef_state) {
+  case READY:
+    tone(1500, 100);
+    tone(1100, 100);
+    tone(1500, 100);
+    tone(1100, 100);
+    start_time_hef =
+        chrono::duration_cast<chrono::milliseconds>(main_timer.elapsed_time())
+            .count();
+    current_hef_state = MOVE_UP;
+    break;
+  case MOVE_UP:
+    hef_motor.speed(map(delta_time, 0, 2000, 0, 100) / 100);
+
+    if (delta_time > 5000) {
+      start_time_hef =
+          chrono::duration_cast<chrono::milliseconds>(main_timer.elapsed_time())
+              .count();
+      current_hef_state = WAIT_UP;
     }
-    
+    break;
+  case WAIT_UP:
+    if (delta_time > 1000) {
+      start_time_hef =
+          chrono::duration_cast<chrono::milliseconds>(main_timer.elapsed_time())
+              .count();
+      current_hef_state = MOVE_DOWN;
+    }
+    break;
+  case MOVE_DOWN:
+    hef_motor.speed(map(delta_time, 0, 2000, 0, 100) / 100);
+
+    if (delta_time > 5000) {
+      start_time_hef =
+          chrono::duration_cast<chrono::milliseconds>(main_timer.elapsed_time())
+              .count();
+      current_hef_state = WAIT_DOWN;
+    }
+    break;
+  case WAIT_DOWN:
+    if (delta_time > 1000) {
+      start_time_hef =
+          chrono::duration_cast<chrono::milliseconds>(main_timer.elapsed_time())
+              .count();
+      current_hef_state = DONE;
+    }
+    break;
+  case DONE:
+    tone(1100, 100);
+    tone(1500, 100);
+    tone(1100, 100);
+    tone(1500, 100);
+    return true;
+    break;
+  }
+
+  // uint32_t delta_time = current_ms_hef - start_time_hef;
+
+  // if(delta_time <= 10000) {
+  //     hef_motor.speed(100);
+  //     return false;
+  // } else{
+  //     return true;
+  // }
+  return false;
 }
 
 void handle_packet_delivery() {
@@ -241,11 +317,12 @@ void handle_packet_delivery() {
     motor_left.speed(0);
     motor_right.speed(0);
 
-
-// Begin timer to compare with current_ms
-    start_time_hef = chrono::duration_cast<chrono::milliseconds>(main_timer.elapsed_time())
-          .count();
-    while (!hefmotor());
+    // Begin timer to compare with current_ms
+    start_time_hef =
+        chrono::duration_cast<chrono::milliseconds>(main_timer.elapsed_time())
+            .count();
+    while (!hefmotor())
+      ;
 
     has_delivered_package = true;
   }
@@ -262,25 +339,22 @@ int main() {
 
   while (true) {
     if (start_button) {
-        loop();
+      loop();
     } else {
 
-        uint32_t current_ms = chrono::duration_cast<chrono::milliseconds>(main_timer.elapsed_time()).count();
-        if (current_ms - last_not_started_millis > 250) {
-            last_not_started_millis = current_ms;
-            last_not_started_toggle = last_not_started_toggle == 0 ? 1 : 0;
-            pixy_camera.setLamp(last_not_started_toggle, last_not_started_toggle);
-        }
+      uint32_t current_ms =
+          chrono::duration_cast<chrono::milliseconds>(main_timer.elapsed_time())
+              .count();
+      if (current_ms - last_not_started_millis > 250) {
+        last_not_started_millis = current_ms;
+        last_not_started_toggle = last_not_started_toggle == 0 ? 1 : 0;
+        pixy_camera.setLamp(last_not_started_toggle, last_not_started_toggle);
+      }
 
-        motor_left.speed(0);
-        motor_right.speed(0);
+      motor_left.speed(0);
+      motor_right.speed(0);
     }
   }
-}
-
-// Map a specific value to a different range
-long map(long x, long in_min, long in_max, long out_min, long out_max) {
-  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
 // initialize things like the pixy camera,  motor controllers, distance sensor,
@@ -418,7 +492,7 @@ void loop() {
 
   handle_packet_delivery();
 
-//   printf("b");
+  //   printf("b");
 
   // ---------- //
   //   PIXY2    //
