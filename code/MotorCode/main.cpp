@@ -8,6 +8,7 @@
 
 #include "Motor.h"
 #include "Pixy2.h"
+#include "PixySettings.h"
 #include "ThisThread.h"
 #include "mbed.h"
 #include <cstdint>
@@ -566,22 +567,41 @@ void loop() {
   }
 
   ////////////////////////////////////////////
-  int thresholdlow = 5;
-  if (pixy2_line_vector_location_percentage < 50 - thresholdlow) {
-    motor_left_power =
-        map(pixy2_line_vector_location_percentage, 50, 0, 0, 100) / 100.0;
-    motor_left_power = 0;
+
+  if (pixy2_line_vector_location_percentage < 50 - PIXY2_CENTER_THRESHOLD ||
+      pixy2_line_vector_location_percentage > 50 + PIXY2_CENTER_THRESHOLD) {
+    if (pixy2_line_vector_location_percentage < 50) { // Line on the left side
+      //   motor_right_power = 0;
+      motor_right_power =
+          map(pixy2_line_vector_location_percentage, 0, 50, 0, 100) / 100.0;
+    } else { // Line on the right side
+      //   motor_left_power = 0;
+      motor_left_power =
+          map(pixy2_line_vector_location_percentage, 100, 50, 0, 100) / 100.0;
+    }
   } else {
     motor_left_power = 1.0;
-  }
-
-  if (pixy2_line_vector_location_percentage > 50 + thresholdlow) {
-    motor_right_power =
-        map(pixy2_line_vector_location_percentage, 50, 100, 0, 100) / 100.0;
-    motor_right_power = 0;
-  } else {
     motor_right_power = 1.0;
   }
+
+  //   if (pixy2_line_vector_location_percentage < 50 - PIXY2_CENTER_THRESHOLD)
+  //   {
+  //     motor_left_power =
+  //         map(pixy2_line_vector_location_percentage, 50, 0, 0, 100) / 100.0;
+  //     // motor_left_power = 0;
+  //   } else {
+  //     motor_left_power = 1.0;
+  //   }
+
+  //   if (pixy2_line_vector_location_percentage > 50 + PIXY2_CENTER_THRESHOLD)
+  //   {
+  //     motor_right_power =
+  //         map(pixy2_line_vector_location_percentage, 50, 100, 0, 100) /
+  //         100.0;
+  //     // motor_right_power = 0;
+  //   } else {
+  //     motor_right_power = 1.0;
+  //   }
 
   ////////////////////////////////////////////
 
