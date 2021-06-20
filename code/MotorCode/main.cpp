@@ -54,7 +54,7 @@
 // percent ranging from 0% to 100%. When the left or right drive motor exedes
 // the maximum speed it will be limited to this value. And below the minimal
 // value , the motors will be stopped.
-#define ROBOT_MIN_SPEED_IN_PERCENT 20
+#define ROBOT_MIN_SPEED_IN_PERCENT 30
 #define ROBOT_MAX_SPEED_IN_PERCENT 100
 
 // Should the Pixy2 camera use the x coorninate in the distance(true) or
@@ -573,11 +573,11 @@ void loop() {
     if (pixy2_line_vector_location_percentage < 50) { // Line on the left side
       //   motor_right_power = 0;
       motor_right_power =
-          map(pixy2_line_vector_location_percentage, 0, 50, 0, 100) / 100.0;
+          map(pixy2_line_vector_location_percentage, 0, 50, 30, 100) / 100.0;
     } else { // Line on the right side
       //   motor_left_power = 0;
       motor_left_power =
-          map(pixy2_line_vector_location_percentage, 100, 50, 0, 100) / 100.0;
+          map(pixy2_line_vector_location_percentage, 100, 50, 30, 100) / 100.0;
     }
   } else {
     motor_left_power = 1.0;
@@ -668,6 +668,12 @@ void loop() {
   if (distance_measured_in_mm < STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM + 500) {
     motor_left_power = .5;
     motor_right_power = .5;
+  }
+
+  // Drive back when too close
+  if (distance_measured_in_mm < STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM - 10) {
+    motor_left_power = -.3;
+    motor_right_power = -.3;
   }
 
   float a = constrain(
