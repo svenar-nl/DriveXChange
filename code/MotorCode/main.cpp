@@ -7,6 +7,7 @@
 #define DISTANCE_SENSOR_ULTRASONIC
 
 #include "Motor.h"
+#include "PIDLoop.h"
 #include "Pixy2.h"
 #include "PixySettings.h"
 #include "ThisThread.h"
@@ -132,6 +133,9 @@ DigitalIn halleffect(D2, PullDown);
 // Low = off
 // High = on
 DigitalIn start_button(A2, PullDown);
+
+// PID for pixy
+PIDLoop headingLoop(5000, 0, 0, false);
 
 // ------------------------------ //
 //            VARIABLES           //
@@ -568,21 +572,40 @@ void loop() {
 
   ////////////////////////////////////////////
 
-  if (pixy2_line_vector_location_percentage < 50 - PIXY2_CENTER_THRESHOLD ||
-      pixy2_line_vector_location_percentage > 50 + PIXY2_CENTER_THRESHOLD) {
-    if (pixy2_line_vector_location_percentage < 50) { // Line on the left side
-      //   motor_right_power = 0;
-      motor_right_power =
-          map(pixy2_line_vector_location_percentage, 0, 50, 30, 100) / 100.0;
-    } else { // Line on the right side
-      //   motor_left_power = 0;
-      motor_left_power =
-          map(pixy2_line_vector_location_percentage, 100, 50, 30, 100) / 100.0;
-    }
-  } else {
-    motor_left_power = 1.0;
-    motor_right_power = 1.0;
-  }
+  uint32_t error = (int32_t)pixy2_line_vector_location_percentage - (int32_t)50;
+
+  headingLoop.update(error);
+
+  // 0 - 1000???
+  int left = headingLoop.m_command;
+  int right = -headingLoop.m_command;
+
+  printf(" :%d, %d: ", left, right);
+
+  // old pixy code
+
+  //   if (pixy2_line_vector_location_percentage < 50 - PIXY2_CENTER_THRESHOLD
+  //   ||
+  //       pixy2_line_vector_location_percentage > 50 + PIXY2_CENTER_THRESHOLD)
+  //       {
+  //     if (pixy2_line_vector_location_percentage < 50) { // Line on the left
+  //     side
+  //       //   motor_right_power = 0;
+  //       motor_right_power =
+  //           map(pixy2_line_vector_location_percentage, 0, 50, 30, 100) /
+  //           100.0;
+  //     } else { // Line on the right side
+  //       //   motor_left_power = 0;
+  //       motor_left_power =
+  //           map(pixy2_line_vector_location_percentage, 100, 50, 30, 100) /
+  //           100.0;
+  //     }
+  //   } else {
+  //     motor_left_power = 1.0;
+  //     motor_right_power = 1.0;
+  //   }
+
+  // old pixy code
 
   //   if (pixy2_line_vector_location_percentage < 50 - PIXY2_CENTER_THRESHOLD)
   //   {
