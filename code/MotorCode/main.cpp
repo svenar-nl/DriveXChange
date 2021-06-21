@@ -259,7 +259,7 @@ bool hefmotor() {
     current_hef_state = MOVE_UP;
     break;
   case MOVE_UP:
-    hef_motor.speed(map(delta_time, 0, 2000, 0, 100) / 100);
+    hef_motor.speed(-(map(delta_time, 0, 2000, 0, 100) / 100));
 
     if (delta_time > 5000) {
       start_time_hef =
@@ -299,6 +299,7 @@ bool hefmotor() {
     tone(1500, 100);
     tone(1100, 100);
     tone(1500, 100);
+    hef_motor.speed(0);
     return true;
     break;
   }
@@ -706,13 +707,13 @@ void loop() {
 
   // Is the distance in front of the robot smaller than the predefined target
   // distance. Stop the motors.
-  bool use_distance_sensor = false;
+  bool use_distance_sensor = true;
 
   if (use_distance_sensor) {
     if (distance_measured_in_mm < STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM) {
-      tone(1500, 100);
-      tone(1300, 100);
-      tone(1100, 100);
+    //   tone(1500, 100);
+    //   tone(1300, 100);
+    //   tone(1100, 100);
 
       motor_left_power = 0;
       motor_right_power = 0;
