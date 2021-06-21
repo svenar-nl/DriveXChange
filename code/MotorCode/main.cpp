@@ -45,7 +45,7 @@
 // Example if the sensor is mounted 80mm deep in the robot, set it to 80, if the
 // sensor is placed 20mm in front of the robot, set it to -20. This variable
 // makes sure that the robot can stop at the right distance.
-#define DISTANCE_SENSOR_OFFSET_IN_MM 0
+#define DISTANCE_SENSOR_OFFSET_IN_MM -40
 
 // At what distance should the robot stop? The VL53L1X Time of Flight sensor
 // provides the distance. The distance is in millimeters.
@@ -89,7 +89,7 @@
 #define NUMBER_OF_MAGNETS_ON_WHEEL 1
 
 // Target distance to deliver the packet at
-#define PACKET_TARGET_DISTANCE_IN_MM 10 * 1000
+#define PACKET_TARGET_DISTANCE_IN_M 5
 
 // Rough PI
 #define PI 3.1415
@@ -185,6 +185,8 @@ bool has_delivered_package = false;
 
 uint32_t last_not_started_millis = 0;
 uint8_t last_not_started_toggle = 0;
+
+uint8_t distance_sensor_low_value_count = 0;
 
 enum HEF_STATE {
   READY = 0,
@@ -319,7 +321,7 @@ void handle_packet_delivery() {
   if (has_delivered_package)
     return;
 
-  if (robot_distance_traveled >= PACKET_TARGET_DISTANCE_IN_MM) {
+  if (robot_distance_traveled >= PACKET_TARGET_DISTANCE_IN_M) {
     motor_left.speed(0);
     motor_right.speed(0);
 
@@ -488,7 +490,7 @@ void loop() {
   }
 
   if (do_print_debug) {
-    printf("[traveled %.2fm] ", robot_distance_traveled);
+    printf("[traveled %.2fm | %d] ", robot_distance_traveled, halleffect ? 1 : 0);
   }
 
   // ---------- //
@@ -700,9 +702,22 @@ void loop() {
       DISTANCE_SENSOR_UPDATE_INTERVAL_IN_MS) {
     // Update the last milliseconds to the current milliseconds
     distance_sensor_read_last_milliseconds = current_ms;
-    distance_measured_in_mm =
+
+    uint32_t distance_as_reported_by_sensor =
         distance_sensor.get_distance() + DISTANCE_SENSOR_OFFSET_IN_MM;
+    
+    if (distance_as_reported_by_sensor < STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM) {
+        distance_sensor_low_value_count++;
+        if (distance_sensor_low_value_count > 10) {
+            distance_measured_in_mm = distance_as_reported_by_sensor;
+        }
+        
+    } else {
+        distance_sensor_low_value_count = 0;
+        distance_measured_in_mm = distance_as_reported_by_sensor;
+    }
   }
+
 #endif
 
   // Is the distance in front of the robot smaller than the predefined target
@@ -710,7 +725,7 @@ void loop() {
   bool use_distance_sensor = true;
 
   if (use_distance_sensor) {
-    if (distance_measured_in_mm < STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM) {
+    if (distance_measured_in_mm < STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM + 20 && distance_measured_in_mm > STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM - 20) {
     //   tone(1500, 100);
     //   tone(1300, 100);
     //   tone(1100, 100);
@@ -718,18 +733,19 @@ void loop() {
       motor_left_power = 0;
       motor_right_power = 0;
       // return;
-    }
+    } else {
 
-    ///////////////////////////////////////
-    if (distance_measured_in_mm < STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM + 500) {
-      motor_left_power = .5;
-      motor_right_power = .5;
-    }
+        ///////////////////////////////////////
+        if (distance_measured_in_mm < STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM + 500) {
+            motor_left_power = .5;
+            motor_right_power = .5;
+        }
 
-    // Drive back when too close
-    if (distance_measured_in_mm < STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM - 10) {
-      motor_left_power = -.3;
-      motor_right_power = -.3;
+        // Drive back when too close
+        if (distance_measured_in_mm < STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM) {
+            motor_left_power = -.6;
+            motor_right_power = -.6;
+        }
     }
   }
 
@@ -789,8 +805,8 @@ void loop() {
   motor_left.speed(motor_left_power);
   motor_right.speed(motor_right_power);
 
-  // motor_left.speed(0);
-  // motor_right.speed(0);
+//   motor_left.speed(0);
+//   motor_right.speed(0);
 
   // When DEBUG is enabled(true) print a new line character.
   if (do_print_debug) {
