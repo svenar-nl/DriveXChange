@@ -1,6 +1,6 @@
 [
     {
-        "module": "Motor/Motor.o",
+        "module": "Motor\\Motor.o",
         "size": {
             ".text": 238,
             ".data": 0,
@@ -11,18 +11,7 @@
         }
     },
     {
-        "module": "Pixy2/Utils.o",
-        "size": {
-            ".text": 106,
-            ".data": 0,
-            ".bss": 24,
-            ".text-delta": 0,
-            ".data-delta": 0,
-            ".bss-delta": 0
-        }
-    },
-    {
-        "module": "[lib]/c_w.l",
+        "module": "[lib]\\c_w.l",
         "size": {
             ".text": 11395,
             ".data": 16,
@@ -33,9 +22,9 @@
         }
     },
     {
-        "module": "[lib]/fz_wm.l",
+        "module": "[lib]\\fz_wm.l",
         "size": {
-            ".text": 2694,
+            ".text": 1418,
             ".data": 0,
             ".bss": 0,
             ".text-delta": 0,
@@ -44,7 +33,7 @@
         }
     },
     {
-        "module": "[lib]/libcppabi_w.l",
+        "module": "[lib]\\libcppabi_w.l",
         "size": {
             ".text": 44,
             ".data": 0,
@@ -55,7 +44,7 @@
         }
     },
     {
-        "module": "[lib]/m_wm.l",
+        "module": "[lib]\\m_wm.l",
         "size": {
             ".text": 48,
             ".data": 0,
@@ -79,16 +68,16 @@
     {
         "module": "main.o",
         "size": {
-            ".text": 2470,
+            ".text": 2894,
             ".data": 0,
-            ".bss": 398,
-            ".text-delta": 0,
+            ".bss": 453,
+            ".text-delta": 4,
             ".data-delta": 0,
             ".bss-delta": 0
         }
     },
     {
-        "module": "mbed-os/cmsis",
+        "module": "mbed-os\\cmsis",
         "size": {
             ".text": 9618,
             ".data": 168,
@@ -99,7 +88,7 @@
         }
     },
     {
-        "module": "mbed-os/connectivity",
+        "module": "mbed-os\\connectivity",
         "size": {
             ".text": 270,
             ".data": 0,
@@ -110,9 +99,9 @@
         }
     },
     {
-        "module": "mbed-os/drivers",
+        "module": "mbed-os\\drivers",
         "size": {
-            ".text": 1968,
+            ".text": 1938,
             ".data": 0,
             ".bss": 1236,
             ".text-delta": 0,
@@ -121,9 +110,9 @@
         }
     },
     {
-        "module": "mbed-os/hal",
+        "module": "mbed-os\\hal",
         "size": {
-            ".text": 1658,
+            ".text": 1702,
             ".data": 4,
             ".bss": 58,
             ".text-delta": 0,
@@ -132,7 +121,7 @@
         }
     },
     {
-        "module": "mbed-os/platform",
+        "module": "mbed-os\\platform",
         "size": {
             ".text": 5889,
             ".data": 64,
@@ -143,7 +132,7 @@
         }
     },
     {
-        "module": "mbed-os/rtos",
+        "module": "mbed-os\\rtos",
         "size": {
             ".text": 426,
             ".data": 0,
@@ -154,7 +143,7 @@
         }
     },
     {
-        "module": "mbed-os/targets",
+        "module": "mbed-os\\targets",
         "size": {
             ".text": 14312,
             ".data": 8,
@@ -165,11 +154,22 @@
         }
     },
     {
+        "module": "mbed-pixy2\\Pixy2",
+        "size": {
+            ".text": 106,
+            ".data": 0,
+            ".bss": 24,
+            ".text-delta": 0,
+            ".data-delta": 0,
+            ".bss-delta": 0
+        }
+    },
+    {
         "summary": {
-            "static_ram": 11004,
+            "static_ram": 11059,
             "static_ram_delta": 0,
-            "total_flash": 51428,
-            "total_flash_delta": 0
+            "total_flash": 50590,
+            "total_flash_delta": 4
         }
     }
 ]

@@ -1,13 +1,13 @@
 #include "DigitalOut.h"
 #include "Motor.h"
+#include "PIDLoop.h"
 #include "Pixy2.h"
 #include "PwmOut.h"
 #include "ThisThread.h"
 #include "mbed.h"
 
+
 Pixy2 pixy;
-Timer main_timer;
-bool timer_running = false;
 
 uint8_t x0 = 0, y0 = 0, x1 = 0, y1 = 0;
 
@@ -15,9 +15,15 @@ uint8_t x0 = 0, y0 = 0, x1 = 0, y1 = 0;
 Motor motor_left(A6, D8, D9);
 Motor motor_right(D3, D6, D7);
 
+DigitalIn start_button(A2, PullDown);
+
+PIDLoop headingLoop(5000, 0, 0, false);
+
 #define TOP_SPEED 40
 
 bool pixy_ready = false;
+
+Timer main_timer;
 
 // PwmOut test_a6(A6);
 // DigitalOut test_d4(D4);
@@ -39,7 +45,9 @@ int main() {
   setup();
 
   while (true) {
-    loop();
+    if (start_button) {
+      loop();
+    }
   }
 
   return 0;
@@ -54,16 +62,24 @@ void setup() {
   pixy.setLamp(1, 1);
   pixy.line.setMode(LINE_VECTOR);
 
-//   motor_left.speed(0.5);
-//   motor_right.speed(0.5);
+  main_timer.start();
 
-//   ThisThread::sleep_for(250ms);
+  //   motor_left.speed(0.5);
+  //   motor_right.speed(0.5);
+
+  //   ThisThread::sleep_for(250ms);
 
   motor_left.speed(0.0);
   motor_right.speed(0.0);
 }
 
 void loop() {
+
+  uint32_t current_ms =
+      chrono::duration_cast<chrono::milliseconds>(main_timer.elapsed_time())
+          .count();
+
+  bool do_print = current_ms % 50 == 0;
 
   // test_a6 = 0;
   // test_d4
@@ -89,16 +105,6 @@ void loop() {
     // pixy.line.vectors->print();
     //   } else {
     // printf("0\n");
-    if (timer_running) {
-      main_timer.stop();
-      main_timer.reset();
-      timer_running = false;
-    }
-  } else {
-    if (!timer_running) {
-      main_timer.start();
-      timer_running = true;
-    }
   }
 
   //   printf("(%d, %d)\n", x0, y0);
@@ -110,119 +116,104 @@ void loop() {
 
   for (int i = 0; i < 20; i++) {
     if (i == 0 || i == 20 - 1) {
-      printf("|");
+      if (do_print)
+        printf("|");
     } else if (i == (int)(used_x_variable * 20) / pixy.frameWidth) {
-      printf("^");
+      if (do_print)
+        printf("^");
     } else if (i == 9 || i == 10) {
-      printf("|");
+      if (do_print)
+        printf("|");
     } else {
-      printf(" ");
+      if (do_print)
+        printf(" ");
     }
   }
 
   if (location_percentage > 0) {
     pixy_ready = true;
   } else {
-    pixy.init();
-    pixy.changeProg("line_tracking");
-    pixy.getResolution();
-    pixy.setLamp(0, 0);
-    pixy.line.setMode(LINE_VECTOR);
+      if (!pixy_ready) {
+        pixy.init();
+        pixy.changeProg("line_tracking");
+        pixy.getResolution();
+        pixy.setLamp(0, 0);
+        pixy.line.setMode(LINE_VECTOR);
 
-    ThisThread::sleep_for(500ms);
+        ThisThread::sleep_for(500ms);
 
-    pixy.setLamp(1, 1);
+        pixy.setLamp(1, 1);
 
-    ThisThread::sleep_for(500ms);
+        ThisThread::sleep_for(500ms);
+      }
   }
+
+  ///////////////////////////////////////////
+
+
+  float power_left = 0.0;
+  float power_right = 0.0;
+
+  int error = location_percentage - 50;
+  int error2 = used_x_variable - pixy.frameWidth / 2;
+
+  if (do_print)
+    printf(" :%d, %d: ", error, error2);
+
+  headingLoop.update(error2);
+
+  int left = headingLoop.m_command;
+  int right = -headingLoop.m_command;
+
+  if (location_percentage < 45 || location_percentage > 55) {
+    // power_left = (float) map(abs(left), 0, 400, 0, 100) / 100.0;
+    // power_right = (float) map(abs(right), 0, 400, 0, 100) / 100.0;
+
+    power_left = (float) abs(left) / 400.0;
+    power_right = (float) abs(right) / 400.0;
+
+    power_left = left < 0 ? -power_left : power_left;
+    power_right = right < 0 ? -power_right : power_right;
+  } else {
+      power_left = 1.0;
+      power_right = 1.0;
+    }
+
+  if (do_print)
+    printf(" <%d, %d> ", left, right);
 
   int thresholdlow = 5;
   float motor_min_speed = 0.2;
 
-  bool doDrive =
-      !timer_running || (timer_running && main_timer.read_ms() < 1500);
+  power_left = (float)map(power_left * 100, -100, 100, -75, 75) / 100.0;
+  power_right = (float)map(power_right * 100, -100, 100, -75, 75) / 100.0;
 
-  //   motor_right.speed(location_percentage < 50 - thresholdlow ? 1 : 0);
-  //   motor_left.speed(location_percentage > 50 + thresholdlow ? 1 : 0);
-
-  ///////////////////////////////////////////////////////////
-
-  //   motor_left.speed(doDrive
-  //                        ? (location_percentage < 50 - thresholdlow ?
-  //                        (location_percentage < 50 - thresholdhigh ? 0 : 0.5)
-  //                        : 1) : 0);
-  //   motor_right.speed(doDrive
-  //                         ? (location_percentage > 50 + thresholdhigh ?
-  //                         (location_percentage > 50 + thresholdhigh ? 0 :
-  //                         0.5) : 1) : 0);
-
-  ///////////////////////////////////////////////////////////
-
-  // if (doDrive) {
-  //     if (location_percentage < 50 - thresholdlow) {
-  //         if (location_percentage < 50 - thresholdhigh) {
-  //             motor_left.speed(0);
-  //         } else {
-  //             motor_left.speed(0.5);
-  //         }
-  //     } else {
-  //         motor_left.speed(1);
-  //     }
-
-  //     if (location_percentage > 50 + thresholdlow) {
-  //         if (location_percentage > 50 + thresholdhigh) {
-  //             motor_right.speed(0);
-  //         } else {
-  //             motor_right.speed(0.5);
-  //         }
-  //     } else {
-  //         motor_right.speed(1);
-  //     }
-  // } else {
-  //     motor_left.speed(0);
-  //     motor_right.speed(0);
-  // }
-
-  ///////////////////////////////////////////////////////////
-
-  ///////////////////////////////////////////////////////////
-
-  float power_left = 0.0, power_right = 0.0;
-
-  if (location_percentage < 50 - thresholdlow) {
-    power_left = map(location_percentage, 0, 50, 0, 100) / 100.0;
-  } else {
-    power_left = 1.0;
+  if (power_left > 0 && power_left < motor_min_speed) {
+      power_left = 0;
   }
 
-  if (location_percentage > 50 + thresholdlow) {
-    power_right = map(location_percentage, 100, 50, 0, 100) / 100.0;
-  } else {
-    power_right = 1.0;
+  if (power_right > 0 && power_right < motor_min_speed) {
+      power_right = 0;
   }
 
-  power_left = power_left < motor_min_speed ? 0 : power_left;
-  power_right = power_right < motor_min_speed ? 0 : power_right;
-
-  if (!doDrive) {
-    power_left = 0.0;
-    power_right = 0.0;
+  if (power_left < 0 && power_left > -motor_min_speed) {
+      power_left = 0;
   }
 
-  //   power_left = power_left > TOP_SPEED ? TOP_SPEED : power_left;
-  //   power_right = power_right > TOP_SPEED ? TOP_SPEED : power_right;
-
-  power_left = map(power_left * 100.0, 0.0, 100.0, 0.0, TOP_SPEED) / 100.0;
-  power_right = map(power_right * 100.0, 0.0, 100.0, 0.0, TOP_SPEED) / 100.0;
+  if (power_right < 0 && power_right > -motor_min_speed) {
+      power_right = 0;
+  }
 
   if (pixy_ready) {
     motor_left.speed(power_left);
     motor_right.speed(power_right);
   }
 
-  printf("\t %d\t%d\t%d\t(%.2f, %.2f)", location_percentage, doDrive ? 1 : 0,
-         pixy_ready ? 1 : 0, power_left, power_right);
-  printf("\n");
+  if (do_print)
+    printf("\t %d\t%d\t(%.2f, %.2f)", location_percentage, pixy_ready ? 1 : 0,
+           power_left, power_right);
+  if (do_print)
+    printf("\n");
 
   ///////////////////////////////////////////////////////////
 }

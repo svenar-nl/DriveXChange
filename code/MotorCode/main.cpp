@@ -55,7 +55,7 @@
 // percent ranging from 0% to 100%. When the left or right drive motor exedes
 // the maximum speed it will be limited to this value. And below the minimal
 // value , the motors will be stopped.
-#define ROBOT_MIN_SPEED_IN_PERCENT 30
+#define ROBOT_MIN_SPEED_IN_PERCENT 40
 #define ROBOT_MAX_SPEED_IN_PERCENT 100
 
 // Should the Pixy2 camera use the x coorninate in the distance(true) or
@@ -572,7 +572,8 @@ void loop() {
 
   ////////////////////////////////////////////
 
-  uint32_t error = (int32_t)pixy2_line_vector_location_percentage - (int32_t)50;
+//   uint32_t error = (int32_t)pixy2_line_vector_location_percentage - (int32_t)50;
+  uint32_t error = (int32_t)pixy2_line_vector_location - (int32_t)(pixy_camera.frameWidth / 2);
 
   headingLoop.update(error);
 
@@ -580,7 +581,35 @@ void loop() {
   int left = headingLoop.m_command;
   int right = -headingLoop.m_command;
 
-  printf(" :%d, %d: ", left, right);
+  float correction_left = (float)left / 400.0;
+  float correction_right = (float)right / 400.0;
+
+  if (do_print_debug) {
+    printf(" <%.2f, %.2f> ", motor_left_power, motor_right_power);
+  }
+
+  if (pixy2_line_vector_location_percentage < 50 - PIXY2_CENTER_THRESHOLD ||
+      pixy2_line_vector_location_percentage > 50 + PIXY2_CENTER_THRESHOLD) {
+        motor_left_power = (float) abs(left) / 400.0;
+        motor_right_power = (float) abs(right) / 400.0;
+
+        motor_left_power = left < 0 ? -motor_left_power : motor_left_power;
+        motor_right_power = right < 0 ? -motor_right_power : motor_right_power;
+        if (do_print_debug) printf(" 1 ");
+    // motor_left_power *=
+    //     correction_left > 0.0 ? 1.0 - correction_left : correction_left;
+    // motor_right_power *=
+    //     correction_right > 0.0 ? 1.0 - correction_right : correction_right;
+  } else {
+      motor_left_power = 1.0;
+      motor_right_power = 1.0;
+      if (do_print_debug) printf(" 0 ");
+  }
+
+  if (do_print_debug) {
+    printf(" :%d(%.2f), %d(%.2f): ", left, correction_left, right,
+           correction_right);
+  }
 
   // old pixy code
 
@@ -677,35 +706,41 @@ void loop() {
 
   // Is the distance in front of the robot smaller than the predefined target
   // distance. Stop the motors.
-  if (distance_measured_in_mm < STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM) {
-    tone(1500, 100);
-    tone(1300, 100);
-    tone(1100, 100);
+  bool use_distance_sensor = false;
 
-    motor_left_power = 0;
-    motor_right_power = 0;
-    // return;
-  }
+  if (use_distance_sensor) {
+    if (distance_measured_in_mm < STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM) {
+      tone(1500, 100);
+      tone(1300, 100);
+      tone(1100, 100);
 
-  ///////////////////////////////////////
-  if (distance_measured_in_mm < STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM + 500) {
-    motor_left_power = .5;
-    motor_right_power = .5;
-  }
+      motor_left_power = 0;
+      motor_right_power = 0;
+      // return;
+    }
 
-  // Drive back when too close
-  if (distance_measured_in_mm < STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM - 10) {
-    motor_left_power = -.3;
-    motor_right_power = -.3;
+    ///////////////////////////////////////
+    if (distance_measured_in_mm < STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM + 500) {
+      motor_left_power = .5;
+      motor_right_power = .5;
+    }
+
+    // Drive back when too close
+    if (distance_measured_in_mm < STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM - 10) {
+      motor_left_power = -.3;
+      motor_right_power = -.3;
+    }
   }
 
   float a = constrain(
       (distance_measured_in_mm - STOP_ROBOT_AT_DISTANCE_IN_FRONT_IN_MM) / 100.0,
       -1, 1);
 
-  if (distance_measured_in_mm > 0) {
-    motor_left_power *= a;
-    motor_right_power *= a;
+  if (use_distance_sensor) {
+    if (distance_measured_in_mm > 0) {
+      motor_left_power *= a;
+      motor_right_power *= a;
+    }
   }
   ////////////////////////////////////////
 
@@ -720,18 +755,41 @@ void loop() {
 
   // Limit the drive motors minimal speed. This works with a single line if else
   // statement in the format: (variable = condition ? true : false).
-  motor_left_power =
-      (abs(motor_left_power) < ROBOT_MIN_SPEED_IN_PERCENT / 100.0)
-          ? 0
-          : motor_left_power;
+//   motor_left_power =
+//       (abs(motor_left_power) < ROBOT_MIN_SPEED_IN_PERCENT / 100.0)
+//           ? 0
+//           : motor_left_power;
 
-  motor_right_power =
-      (abs(motor_right_power) < ROBOT_MIN_SPEED_IN_PERCENT / 100.0)
-          ? 0
-          : motor_right_power;
+//   motor_right_power =
+//       (abs(motor_right_power) < ROBOT_MIN_SPEED_IN_PERCENT / 100.0)
+//           ? 0
+//           : motor_right_power;
+
+    if (motor_left_power != 0) {
+        if (abs(motor_left_power) < ROBOT_MIN_SPEED_IN_PERCENT / 100.0){
+            if (motor_left_power < 0) {
+                motor_left_power = -(ROBOT_MIN_SPEED_IN_PERCENT / 100.0);
+            } else {
+                motor_left_power = (ROBOT_MIN_SPEED_IN_PERCENT / 100.0);
+            }
+        }
+    }
+
+    if (motor_right_power != 0) {
+        if (abs(motor_right_power) < ROBOT_MIN_SPEED_IN_PERCENT / 100.0){
+            if (motor_right_power < 0) {
+                motor_right_power = -(ROBOT_MIN_SPEED_IN_PERCENT / 100.0);
+            } else {
+                motor_right_power = (ROBOT_MIN_SPEED_IN_PERCENT / 100.0);
+            }
+        }
+    }
 
   motor_left.speed(motor_left_power);
   motor_right.speed(motor_right_power);
+
+  // motor_left.speed(0);
+  // motor_right.speed(0);
 
   // When DEBUG is enabled(true) print a new line character.
   if (do_print_debug) {
